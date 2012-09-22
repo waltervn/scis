@@ -108,6 +108,11 @@ handle_said_fragment(char c);
 **			 represents a terminator.
 */
 
+void
+use_absolute_lofs();
+/* Generate absolute lofs instructions
+*/
+
 /*==========---------------=========*/
 /* Internal assembler functionality */
 /*==========---------------=========*/

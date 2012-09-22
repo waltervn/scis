@@ -228,6 +228,13 @@ char *ops[128] = {
 	"-spi"
 };
 
+void
+use_absolute_lofs()
+{
+	formats[0x39][0] = Script_Word;
+	formats[0x3a][0] = Script_Word;
+}
+
 int
 decode_vm_op(char *name, int *opcode, int *arg_sizes, int *arg_count)
 {

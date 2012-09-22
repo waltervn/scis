@@ -55,7 +55,7 @@ print_disclaimer()
 void
 print_usage()
 {
-	printf("scis [-q] [-h] [-v] [-d] [-w] [-o outfile] <source.s>\n"
+	printf("scis [-q] [-h] [-v] [-d] [-w] [-a] [-o outfile] <source.s>\n"
 	       "Assembles <source.s> into 'sci.out' or <outfile> (if specified).\n"
 	       "Other options:\n"
 	       "\t-h:\tUsage help\n"
@@ -63,6 +63,7 @@ print_usage()
 	       "\t-q:\tQuiet mode\n"
 	       "\t-d:\tDump binary result to stdout\n"
 	       "\t-w:\tUse wide exports\n"
+	       "\t-a:\tUse absolute lofs\n"
 	       "\t-o <f>:\tWrite result to <f>\n"
 	       );
 }
@@ -72,7 +73,7 @@ main (int argc, char **argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "dqhvwo:")) > -1) {
+	while ((c = getopt(argc, argv, "dqhvwao:")) > -1) {
 
 		switch (c) {
 
@@ -95,6 +96,10 @@ main (int argc, char **argv)
 
 		case 'w':
 			wide_exports = 1;
+			break;
+
+		case 'a':
+			use_absolute_lofs();
 			break;
 
 		case 'o':
