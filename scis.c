@@ -37,6 +37,7 @@
 #include <fcntl.h>
 
 char *output_file = "sci.out";
+int wide_exports = 0;
 
 #ifdef DEBUG
 #  define DEBUG_LEXING
@@ -282,7 +283,7 @@ end_section()
 	if (section_start > -1)
 		wr_word_to(script_pos - section_start, section_start + 2);
 	if (last_section_type == SECT_EXPORTS)
-		wr_word_to((script_pos - section_start - 6) >> 1, section_start + 4);
+		wr_word_to((script_pos - section_start - 6) >> (wide_exports ? 2 : 1), section_start + 4);
 }
 
 void
@@ -434,6 +435,9 @@ handle_label(char *label)
 	if (!IN_CODE)
 		wr_word(0xffff);
 
+	if (section_type == SECT_EXPORTS && wide_exports)
+		wr_word(0);
+
 	add_symbol(symbol_usages, label, referencing_pos, file_name, line_nr, refmode);
 }
 
@@ -520,13 +524,15 @@ end_file()
 			count_pos = script_pos;
 			wr_word(0);
 			wr_word(0); /* Number of entries */
+			if (wide_exports)
+				wr_word(0);
 		}
 		++reloc_count;
 		wr_word(location);
 	}
 	if (reloc_count) {
 		/* Size */
-		wr_word_to(4 + 2 + reloc_count * 2, count_pos);
+		wr_word_to(4 + (wide_exports ? 4 : 2) + reloc_count * 2, count_pos);
 		/* # of relocated things */
 		wr_word_to(reloc_count, count_pos + 2);
 	}

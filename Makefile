@@ -1,4 +1,4 @@
-VERSION=\"0.2.0\"
+VERSION=\"0.3.0\"
 
 CFLAGS=-O0 -ldmalloc -Wall -g -I. -DVERSION=${VERSION}
 

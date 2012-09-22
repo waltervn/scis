@@ -36,12 +36,13 @@ extern int yylex();
 extern FILE *yyin;
 
 extern int dump_result;
+extern int wide_exports;
 
 void
 print_disclaimer()
 {
 	printf("SCI Assembler, version " VERSION "\n"
-	       "\nCopyright 2002--2006 Christoph Reichenbach\n"
+	       "\nCopyright 2002--2012 Christoph Reichenbach, Walter van Niftrik\n"
 	       "This program is Free Software, licensed under the terms of the GNU\n"
 	       "General Public License (GPL) v2 or any later version (at your choice).\n"
 	       "It is provided WITHOUT WARRANTY of any kind, either expressed or\n"
@@ -54,13 +55,14 @@ print_disclaimer()
 void
 print_usage()
 {
-	printf("scis [-q] [-h] [-v] [-d] [-o outfile] <source.s>\n"
+	printf("scis [-q] [-h] [-v] [-d] [-w] [-o outfile] <source.s>\n"
 	       "Assembles <source.s> into 'sci.out' or <outfile> (if specified).\n"
 	       "Other options:\n"
 	       "\t-h:\tUsage help\n"
 	       "\t-v:\tPrint version\n"
 	       "\t-q:\tQuiet mode\n"
 	       "\t-d:\tDump binary result to stdout\n"
+	       "\t-w:\tUse wide exports\n"
 	       "\t-o <f>:\tWrite result to <f>\n"
 	       );
 }
@@ -70,7 +72,7 @@ main (int argc, char **argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "dqhvo:")) > -1) {
+	while ((c = getopt(argc, argv, "dqhvwo:")) > -1) {
 
 		switch (c) {
 
@@ -89,6 +91,10 @@ main (int argc, char **argv)
 
 		case 'q':
 			quiet = 1;
+			break;
+
+		case 'w':
+			wide_exports = 1;
 			break;
 
 		case 'o':
