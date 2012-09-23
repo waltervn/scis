@@ -1,0 +1,2 @@
+bin_PROGRAMS = scis
+scis_SOURCES = decode_ops.c main.c scis.c lexer.l resource.c sci0.c symtab.c

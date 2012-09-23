@@ -32,15 +32,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef DEBUG
+#define DEBUG_OUTPUT
+#define DEBUG_LEXING
+#endif
+
 /* Callbacks for the lexer */
 
 /* Debug information */
 extern int line_nr;
 extern char *file_name;
 extern char *output_file;
+extern int errors;
+
+/* Options */
+typedef struct {
+	char *script_filename;
+	char *heap_filename;
+	int wide_exports;
+	int absolute_lofs;
+} options_t;
 
 /* Generator */
 typedef struct {
+	int
+	(*init) (const options_t *options);
+	/* Initializes the generator
+	** Returns: 1 on success, 0 otherwise
+	*/
+
+	void
+	(*deinit) ();
+	/* Deinitializes the generator
+	*/
+
 	void
 	(*handle_section) (char *section);
 	/* Handles a section specification
@@ -104,8 +129,6 @@ typedef struct {
 	*/
 } generator_t;
 
-extern generator_t *generator;
-
 void
 report_error(int critical, char *fmt, ...);
 /* Reports an error situation
@@ -139,5 +162,8 @@ decode_vm_op(char *name, int *opcode, int *arg_sizes, int *arg_count);
 /* Returns nonzero on failure */
 
 extern generator_t *gen;
+
+void report_error_internally(char * _file_name, int _line_nr, int critical, char *fmt, ...);
+void report_error(int critical, char *fmt, ...);
 
 #endif

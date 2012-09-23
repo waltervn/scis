@@ -1,5 +1,5 @@
 /***************************************************************************
- scis.c Copyright (C) 2002--2006 Christoph Reichenbach
+ resource.c Copyright (C) 2002--2006 Christoph Reichenbach
 
 
  This program may be modified and copied freely according to the terms of
@@ -25,44 +25,40 @@
 
 ***************************************************************************/
 
-#include <stdarg.h>
-#include "scis.h"
+#ifndef RESOURCE_H
+#define RESOURCE_H
 
-int errors = 0;
+struct res;
+typedef struct res res_t;
 
-void
-report_error_internally(char * _file_name, int _line_nr, int critical, char *fmt, ...)
-{
-	va_list args;
-
-	fprintf(stderr, "Error in %s, L%d : ", _file_name, _line_nr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-
-	++errors;
-
-	if (critical) {
-		fprintf(stderr, "Critical error. Aborting...\n");
-		exit(1);
-	}
-}
-
+res_t *
+res_alloc(int type, int max_size);
 
 void
-report_error(int critical, char *fmt, ...)
-{
-	va_list args;
+res_free(res_t *r);
 
-	fprintf(stderr, "Error in %s, L%d : ", file_name, line_nr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
+void
+res_write_bulk(res_t *r, const unsigned char *c, unsigned int len);
 
-	++errors;
+void
+res_write_byte(res_t *r, int b);
 
-	if (critical) {
-		fprintf(stderr, "Critical error. Aborting...\n");
-		exit(1);
-	}
-}
+void
+res_write_word(res_t *r, int b);
+
+int
+res_read_word(const res_t *r, unsigned int pos);
+
+void
+res_modify_word(res_t *r, int b, unsigned int pos);
+
+unsigned int
+res_get_pos(const res_t *r);
+
+void
+res_save(const res_t *r, const char *filename);
+
+void
+res_set_dump_result(int b);
+
+#endif
