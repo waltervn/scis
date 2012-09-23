@@ -30,13 +30,16 @@
 #include <scis.h>
 #include <string.h>
 
-int quiet = 0;
-
 extern int yylex();
 extern FILE *yyin;
 
 extern int dump_result;
 extern int wide_exports;
+
+extern generator_t generator_sci0;
+
+static int quiet = 0;
+generator_t *gen = NULL;
 
 void
 print_disclaimer()
@@ -140,6 +143,7 @@ main (int argc, char **argv)
 	}
 
 	init_scis();
+	gen = &generator_sci0;
 	yylex();
 	finish_scis(output_file);
 

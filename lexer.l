@@ -51,8 +51,8 @@ STRING "\"".*[^\\]"\""
 
 
 \.{IDENTIFIER} {
-	finish_op();
-	handle_section(yytext + 1);
+	gen->finish_op();
+	gen->handle_section(yytext + 1);
 }
 
 
@@ -64,13 +64,13 @@ STRING "\"".*[^\\]"\""
 
 	*c = 0; /* Terminate */
 
-	finish_op();
-	define_label(yytext);
+	gen->finish_op();
+	gen->define_label(yytext);
 }
 
 {IDENTIFIER} {
-	finish_op();
-	handle_identifier(yytext);
+	gen->finish_op();
+	gen->handle_identifier(yytext);
 }
 
 {NUMTOKEN} {
@@ -94,11 +94,11 @@ STRING "\"".*[^\\]"\""
 	if (*cp)
 		report_error(0, "Invalid numeric '%s'\n", yytext);
 
-	handle_numeric(num, word);
+	gen->handle_numeric(num, word);
 }
 
 \&{IDENTIFIER} {
-	handle_label(yytext + 1);
+	gen->handle_label(yytext + 1);
 }
 
 {STRING} {
@@ -151,18 +151,18 @@ STRING "\"".*[^\\]"\""
 		++c;
 	}
 
-	handle_string(yytext + 1);
+	gen->handle_string(yytext + 1);
 }
 
 "," {
-	handle_comma();
+	gen->handle_comma();
 	if (have_comma)
 		report_error(0, "Duplicate comma");
 	have_comma = 1;
 }
 
 [\&#\[\]\(\)\/\<\>!] {
-	handle_said_fragment(*yytext);
+	gen->handle_said_fragment(*yytext);
 }
 
 ";".*$ /* Ignore comments */
@@ -173,8 +173,8 @@ STRING "\"".*[^\\]"\""
 
 
 <<EOF>> {
-	finish_op();
-	end_file();
+	gen->finish_op();
+	gen->end_file();
 	yy_delete_buffer( YY_CURRENT_BUFFER );
 	yyterminate();
 }

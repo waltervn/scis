@@ -85,11 +85,11 @@ int dump_result = 0;
 
 #define IN_CODE (section_type == SECT_CODE)
 
-int errors = 0;
-int arg_sizes[5];
-int args_count;
-int args_pos;
-int op_begin, op_size;
+static int errors = 0;
+static int arg_sizes[5];
+static int args_count;
+static int args_pos;
+static int op_begin, op_size;
 
 void
 wr_bulk(unsigned char *c, int len)
@@ -286,7 +286,7 @@ end_section()
 		wr_word_to((script_pos - section_start - 6) >> (wide_exports ? 2 : 1), section_start + 4);
 }
 
-void
+static void
 handle_section(char *section)
 {
 	int i = 0;
@@ -322,13 +322,6 @@ handle_section(char *section)
 	args_count = 0;
 }
 
-void
-handle_comma()
-{
-	if (section_type == SECT_SAID)
-		handle_said_fragment(',');
-}
-
 #define SAID_FRAGMENTS_NR 11
 
 struct {
@@ -348,7 +341,7 @@ struct {
 	{'!', 0xff}
 };
 
-void
+static void
 handle_said_fragment(char c)
 {
 	int i;
@@ -371,7 +364,14 @@ handle_said_fragment(char c)
 	report_error(1, "Internal error: handle_said_fragment used on unsupported '%c'\n", c);
 }
 
-void
+static void
+handle_comma()
+{
+	if (section_type == SECT_SAID)
+		handle_said_fragment(',');
+}
+
+static void
 define_label(char *label)
 {
 #ifdef DEBUG_LEXING
@@ -388,7 +388,7 @@ define_label(char *label)
 }
 
 
-int /* nonzero if relative */
+static int /* nonzero if relative */
 handle_nextop(int num)
 {
 	if (args_pos < args_count) {
@@ -410,7 +410,7 @@ getInt16(unsigned char *d)
 	return (*d | (d[1] << 8));
 }
 
-void
+static void
 handle_label(char *label)
 {
 	int refmode = REF_TYPE_ABSOLUTE;
@@ -441,7 +441,7 @@ handle_label(char *label)
 	add_symbol(symbol_usages, label, referencing_pos, file_name, line_nr, refmode);
 }
 
-void
+static void
 handle_identifier(char *ident)
 {
 	int op;
@@ -469,7 +469,7 @@ handle_identifier(char *ident)
 }
 
 
-void
+static void
 handle_numeric(int num, int word)
 {
 #ifdef DEBUG_LEXING
@@ -493,7 +493,7 @@ handle_numeric(int num, int word)
 	}
 }
 
-void
+static void
 finish_op()
 {
 #ifdef DEBUG_LEXING
@@ -504,7 +504,7 @@ finish_op()
 			     args_count, args_pos);
 }
 
-void
+static void
 end_file()
 {
 	int reloc_count = 0;
@@ -541,7 +541,7 @@ end_file()
 	wr_word(0);
 }
 
-void
+static void
 handle_string(char *string)
 {
 #ifdef DEBUG_LEXING
@@ -552,3 +552,16 @@ handle_string(char *string)
 	else
 		wr_bulk((unsigned char *) string, strlen(string) + 1);
 }
+
+generator_t generator_sci0 = {
+	handle_section,
+	define_label,
+	handle_label,
+	handle_identifier,
+	handle_numeric,
+	finish_op,
+	end_file,
+	handle_string,
+	handle_comma,
+	handle_said_fragment,
+};

@@ -39,73 +39,78 @@ extern int line_nr;
 extern char *file_name;
 extern char *output_file;
 
+/* Generator */
+typedef struct {
+	void
+	(*handle_section) (char *section);
+	/* Handles a section specification
+	** Parameters: (char *) section: The specification to handle
+	*/
+
+	void
+	(*define_label) (char *ident);
+	/* Defines a new local label
+	** Parameters: (char *) ident: Name of the label
+	*/
+
+	void
+	(*handle_label) (char *label);
+	/* Handles a label dereferenciation
+	** Parameters: (char *) label: Name of the label
+	*/
+
+	void
+	(*handle_identifier) (char *ident);
+	/* Handles an identifier
+	** Parameters: (char *) ident: The symbolic identifier to handle
+	** Right now this may be any of the following:
+	**  - vm op
+	*/
+
+	void
+	(*handle_numeric) (int num, int word);
+	/* Handles a numeric value
+	** Parameters: (int) num: The number to handle
+	**             (int) word: Whether to interpret this as a 16 bit value
+	*/
+
+	void
+	(*finish_op) ();
+	/* Handles the termination of an operation specification, if open
+	** Does not result in an error if no operation is open
+	*/
+
+	void
+	(*end_file) ();
+	/* Handles the end of the assembly file
+	*/
+
+	void
+	(*handle_string) (char *string);
+	/* Handles an embedded string
+	** Parameters: (char *) string: The string to handle
+	*/
+
+	void
+	(*handle_comma) ();
+	/* Handles the occurence of a comma
+	*/
+
+	void
+	(*handle_said_fragment) (char c);
+	/* Handles the occurence of a single character associated with a Said() fragment
+	** Parameters: (char c): One of '#', '&', '(', ')', '[', ']', '<', '>', ',', and '!'; the latter
+	**			 represents a terminator.
+	*/
+} generator_t;
+
+extern generator_t *generator;
+
 void
 report_error(int critical, char *fmt, ...);
 /* Reports an error situation
 ** Parameters: (int) critical: non-zero iff assembly should be aborted
 **             (char *) fmt ...: Text to display
-*/
-
-void
-handle_section(char *section);
-/* Handles a section specification
-** Parameters: (char *) section: The specification to handle
-*/
-
-void
-define_label(char *ident);
-/* Defines a new local label
-** Parameters: (char *) ident: Name of the label
-*/
-
-void
-handle_label(char *label);
-/* Handles a label dereferenciation
-** Parameters: (char *) label: Name of the label
-*/
-
-void
-handle_identifier(char *ident);
-/* Handles an identifier
-** Parameters: (char *) ident: The symbolic identifier to handle
-** Right now this may be any of the following:
-**  - vm op
-*/
-
-void
-handle_numeric(int num, int word);
-/* Handles a numeric value
-** Parameters: (int) num: The number to handle
-**             (int) word: Whether to interpret this as a 16 bit value
-*/
-
-void
-finish_op();
-/* Handles the termination of an operation specification, if open
-** Does not result in an error if no operation is open
-*/
-
-void
-end_file();
-/* Handles the end of the assembly file
-*/
-
-void
-handle_string(char *string);
-/* Handles an embedded string
-** Parameters: (char *) string: The string to handle
-*/
-
-void
-handle_comma();
-/* Handles the occurence of a comma
-*/
-
-void
-handle_said_fragment(char c);
-/* Handles the occurence of a single character associated with a Said() fragment
-** Parameters: (char c): One of '#', '&', '(', ')', '[', ']', '<', '>', ',', and '!'; the latter
-**			 represents a terminator.
 */
 
 void
@@ -132,5 +137,7 @@ finish_scis(char *dest_file);
 int
 decode_vm_op(char *name, int *opcode, int *arg_sizes, int *arg_count);
 /* Returns nonzero on failure */
+
+extern generator_t *gen;
 
 #endif
