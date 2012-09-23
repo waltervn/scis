@@ -32,13 +32,11 @@
 #include "resource.h"
 #include "scis.h"
 
-static int dump_result = 0;
-
 struct res {
 	unsigned int pos;
 	unsigned int max_size;
 	unsigned char type;
-	char *data;
+	unsigned char *data;
 };
 
 res_t *
@@ -142,46 +140,38 @@ res_get_pos(const res_t *r)
 void
 res_save(const res_t *r, const char *filename)
 {
-	if (errors)
-		fprintf(stderr, "Encountered %d errors: No output was written.\n", errors);
-	else {
-		int fd = creat(filename, 0644);
-		if (!fd) {
-			perror ("While creating output file");
+	int fd = creat(filename, 0644);
+	if (!fd) {
+		perror ("While creating output file");
+		fprintf(stderr, "File was: '%s'\n", filename);
+	} else {
+		unsigned char desc[2] = {r->type, 0x00};
+
+		int written;
+		written = write(fd, desc, 2);
+		if (written >= 2)
+			written = write(fd, r->data, r->pos);
+		if (written < r->pos) {
+			perror ("While writing to output file");
 			fprintf(stderr, "File was: '%s'\n", filename);
-		} else {
-			unsigned char desc[2] = {r->type, 0x00};
-			int written;
-
-			written = write(fd, desc, 2);
-			if (written >= 2)
-				written = write(fd, r->data, r->pos);
-			if (written < r->pos) {
-				perror ("While writing to output file");
-				fprintf(stderr, "File was: '%s'\n", filename);
-			}
-		}
-		close(fd);
-
-		if (dump_result) {
-			int i;
-			for (i = 0; i < r->pos; i++) {
-				if (!(i & 0xf))
-					printf("[%04x] ", i);
-
-				printf(" %02x", r->data[i]);
-
-				if ((i & 0xf) == 0xf)
-					printf("\n");
-			}
-
-			printf("\n");
 		}
 	}
+	close(fd);
 }
 
 void
-res_set_dump_result(int b)
+res_dump(const res_t *r)
 {
-	dump_result = b;
+	int i;
+	for (i = 0; i < r->pos; i++) {
+		if (!(i & 0xf))
+			printf("[%04x] ", i);
+
+		printf(" %02x", r->data[i]);
+
+		if ((i & 0xf) == 0xf)
+			printf("\n");
+	}
+
+	printf("\n");
 }

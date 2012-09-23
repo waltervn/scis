@@ -42,8 +42,6 @@
 /* Debug information */
 extern int line_nr;
 extern char *file_name;
-extern char *output_file;
-extern int errors;
 
 /* Options */
 typedef struct {
@@ -51,6 +49,7 @@ typedef struct {
 	char *heap_filename;
 	int wide_exports;
 	int absolute_lofs;
+	int dump_results;
 } options_t;
 
 /* Generator */
@@ -165,5 +164,6 @@ extern generator_t *gen;
 
 void report_error_internally(char * _file_name, int _line_nr, int critical, char *fmt, ...);
 void report_error(int critical, char *fmt, ...);
+int errors_found();
 
 #endif

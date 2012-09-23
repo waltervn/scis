@@ -59,6 +59,6 @@ void
 res_save(const res_t *r, const char *filename);
 
 void
-res_set_dump_result(int b);
+res_dump(const res_t *r);
 
 #endif

@@ -76,6 +76,7 @@ static int args_pos;
 static int op_begin, op_size;
 static char *dest_file;
 static int wide_exports;
+static int dump_results;
 
 /* ------------------------------ */
 struct symtab_struct *symbol_defs, *symbol_usages, *symbol_relocation;
@@ -85,6 +86,7 @@ init(const options_t *options)
 {
 	dest_file = options->script_filename;
 	wide_exports = options->wide_exports;
+	dump_results = options->dump_results;
 
 	if (options->absolute_lofs)
 		use_absolute_lofs();
@@ -106,7 +108,14 @@ deinit()
 	free_symtab(symbol_defs);
 	free_symtab(symbol_usages);
 	free_symtab(symbol_relocation);
-	res_save(script, dest_file);
+	int errors = errors_found();
+	if (errors)
+		fprintf(stderr, "Encountered %d errors: No output was written.\n", errors);
+	else
+		res_save(script, dest_file);
+
+	if (dump_results)
+		res_dump(script);
 }
 
 static void
