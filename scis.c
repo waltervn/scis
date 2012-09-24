@@ -1,29 +1,21 @@
-/***************************************************************************
- main.c Copyright (C) 2002 Christoph Reichenbach
-
-
- This program may be modified and copied freely according to the terms of
- the GNU general public license (GPL), as long as the above copyright
- notice and the licensing information contained herein are preserved.
-
- Please refer to www.gnu.org for licensing details.
-
- This work is provided AS IS, without warranty of any kind, expressed or
- implied, including but not limited to the warranties of merchantibility,
- noninfringement, and fitness for a specific purpose. The author will not
- be held liable for any damage caused by this work or derivatives of it.
-
- By using this source code, you agree to the licensing terms as stated
- above.
-
-
- Please contact the maintainer for bug reports or inquiries.
-
- Current Maintainer:
-
-    Christoph Reichenbach (CR) <jameson@linuxgames.com>
-
-***************************************************************************/
+/* scis - SCI assembler
+ *
+ * scis is the legal property of its developers, whose names are listed
+ * in the AUTHORS file.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -37,17 +29,16 @@ extern FILE *yyin;
 
 extern generator_t generator_sci0;
 
-static int quiet = 0;
 static int errors = 0;
 generator_t *gen = NULL;
 
 void
 print_disclaimer()
 {
-	printf("SCI Assembler, version " VERSION "\n"
-	       "\nCopyright 2002--2012 Christoph Reichenbach, Walter van Niftrik\n"
+	printf("scis - SCI assembler, version " VERSION "\n"
+	       "\nCopyright (C) 2002-2012 by the authors listed in the AUTHORS file\n"
 	       "This program is Free Software, licensed under the terms of the GNU\n"
-	       "General Public License (GPL) v2 or any later version (at your choice).\n"
+	       "General Public License (GPL) v3 or any later version (at your choice).\n"
 	       "It is provided WITHOUT WARRANTY of any kind, either expressed or\n"
 	       "implied. For further licensing details, please refer to the file\n"
 	       "COPYING, which should have come with your version of the program,\n"
@@ -58,12 +49,10 @@ print_disclaimer()
 void
 print_usage()
 {
-	printf("scis [-q] [-h] [-v] [-d] [-g generation] [-o scrfile] [-H hepfile] <source.s>\n"
-	       "Assembles <source.s>.\n"
-	       "Other options:\n"
+	printf("scis [-h] [-v] [-d] [-g generation] [-o scrfile] [-H hepfile] <source.s>\n"
+	       "Options:\n"
 	       "\t-h:\tUsage help\n"
 	       "\t-v:\tPrint version\n"
-	       "\t-q:\tQuiet mode\n"
 	       "\t-d:\tDump binary result to stdout\n"
 	       "\t-g <n>:\tSCI generation to target\n"
 	       "\t\t1: late SCI0 and early SCI1 (default)\n"
@@ -129,7 +118,7 @@ main (int argc, char **argv)
 	options.dump_results = 0;
 	gen = &generator_sci0;
 
-	while ((c = getopt(argc, argv, "dqhvg:H:o:")) > -1) {
+	while ((c = getopt(argc, argv, "dhvg:H:o:")) > -1) {
 
 		switch (c) {
 
@@ -142,13 +131,8 @@ main (int argc, char **argv)
 			exit(0);
 
 		case 'v':
-			printf("scis, version "VERSION"\n");
 			print_disclaimer();
 			exit(0);
-
-		case 'q':
-			quiet = 1;
-			break;
 
 		case 'g':
 			switch (atoi(optarg)) {
@@ -181,9 +165,6 @@ main (int argc, char **argv)
 			exit(1);
 		}
 	}
-
-	if (!quiet)
-		print_disclaimer();
 
 	file_name = "-";
 

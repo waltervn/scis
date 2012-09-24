@@ -1,4 +1,4 @@
-AC_INIT(scis, 0.3.0, walter@scummvm.org)
+AC_INIT(scis, 0.3.0-git, walter@scummvm.org)
 AC_CONFIG_SRCDIR(.)
 
 AM_INIT_AUTOMAKE

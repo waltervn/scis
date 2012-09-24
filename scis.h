@@ -1,29 +1,22 @@
-/***************************************************************************
- scis.h Copyright (C) 2002 Christoph Reichenbach
+/* scis - SCI assembler
+ *
+ * scis is the legal property of its developers, whose names are listed
+ * in the AUTHORS file.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-
- This program may be modified and copied freely according to the terms of
- the GNU general public license (GPL), as long as the above copyright
- notice and the licensing information contained herein are preserved.
-
- Please refer to www.gnu.org for licensing details.
-
- This work is provided AS IS, without warranty of any kind, expressed or
- implied, including but not limited to the warranties of merchantibility,
- noninfringement, and fitness for a specific purpose. The author will not
- be held liable for any damage caused by this work or derivatives of it.
-
- By using this source code, you agree to the licensing terms as stated
- above.
-
-
- Please contact the maintainer for bug reports or inquiries.
-
- Current Maintainer:
-
-    Christoph Reichenbach (CR) <jameson@linuxgames.com>
-
-***************************************************************************/
 /* SCI assembler header file */
 
 
