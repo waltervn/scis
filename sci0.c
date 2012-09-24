@@ -41,7 +41,7 @@
 #define SECT_PRELOAD_TEXT 9
 #define SECT_LOCALS 10
 
-struct {
+static struct {
 	char *name, value;
 } sections[] = {
 	{"object", SECT_OBJECT},
@@ -108,6 +108,8 @@ deinit()
 
 	if (dump_results)
 		res_dump(script);
+
+	res_free(script);
 }
 
 static void
@@ -261,7 +263,7 @@ define_label(char *label)
 
 		read_symbol(symbol_defs, label, NULL, &def_file, &def_line, NULL);
 		report_error(0, "Label '%s' redefined (previously defined in %s, L%d)\n",
-			     def_file, def_line);
+			     label, def_file, def_line);
 	}
 }
 
@@ -318,10 +320,10 @@ handle_identifier(char *ident)
 {
 	int op;
 
-	finish_op();
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] Identifier '%s' encountered at %04x\n", ident, script_pos);
 #endif
+	finish_op();
 	if (!IN_CODE)
 		report_error(0, "Cannot handle identifiers/opcodes outside of code section\n");
 	else {
@@ -372,10 +374,10 @@ end_file()
 	int reloc_count = 0;
 	int count_pos = 0;
 	int location;
-	finish_op();
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] End-of-file encountered at %04x\n", script_pos);
 #endif
+	finish_op();
 	end_section();
 
 	dereference_symbols();

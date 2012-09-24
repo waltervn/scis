@@ -28,6 +28,7 @@ extern int yylex();
 extern FILE *yyin;
 
 extern generator_t generator_sci0;
+extern generator_t generator_sci11;
 
 static int errors = 0;
 generator_t *gen = NULL;
@@ -57,6 +58,7 @@ print_usage()
 	       "\t-g <n>:\tSCI generation to target\n"
 	       "\t\t1: late SCI0 and early SCI1 (default)\n"
 	       "\t\t2: late SCI1\n"
+	       "\t\t3: SCI1.1\n"
 	       "\t-o <f>:\tWrite script to <f> (defaults to 'sci.scr')\n"
 	       "\t-H <f>:\tWrite heap to <f> (defaults to 'sci.hep')\n"
 	       );
@@ -145,6 +147,9 @@ main (int argc, char **argv)
 				options.wide_exports = 1;
 				options.absolute_lofs = 1;
 				gen = &generator_sci0;
+				break;
+			case 3:
+				gen = &generator_sci11;
 				break;
 			default:
 				fprintf(stderr, "Invalid SCI generation target specified\n");

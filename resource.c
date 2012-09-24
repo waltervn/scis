@@ -161,7 +161,7 @@ res_dump(const res_t *r)
 
 		printf(" %02x", r->data[i]);
 
-		if ((i & 0xf) == 0xf)
+		if ((i & 0xf) == 0xf && i != r->pos - 1)
 			printf("\n");
 	}
 
