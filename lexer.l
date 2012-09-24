@@ -43,7 +43,6 @@ STRING "\"".*[^\\]"\""
 
 
 \.{IDENTIFIER} {
-	gen->finish_op();
 	gen->handle_section(yytext + 1);
 }
 
@@ -56,12 +55,10 @@ STRING "\"".*[^\\]"\""
 
 	*c = 0; /* Terminate */
 
-	gen->finish_op();
 	gen->define_label(yytext);
 }
 
 {IDENTIFIER} {
-	gen->finish_op();
 	gen->handle_identifier(yytext);
 }
 
@@ -159,13 +156,15 @@ STRING "\"".*[^\\]"\""
 
 ";".*$ /* Ignore comments */
 
-\n ++line_nr;
+\n {
+	gen->end_line();
+	++line_nr;
+}
 
 [[:blank:]]+ /* Eat whitespace */
 
 
 <<EOF>> {
-	gen->finish_op();
 	gen->end_file();
 	yy_delete_buffer( YY_CURRENT_BUFFER );
 	yyterminate();

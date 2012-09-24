@@ -92,14 +92,13 @@ typedef struct {
 	*/
 
 	void
-	(*finish_op) ();
-	/* Handles the termination of an operation specification, if open
-	** Does not result in an error if no operation is open
+	(*end_file) ();
+	/* Handles the end of the assembly file
 	*/
 
 	void
-	(*end_file) ();
-	/* Handles the end of the assembly file
+	(*end_line) ();
+	/* Handles the end of an assembly line
 	*/
 
 	void

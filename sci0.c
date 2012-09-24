@@ -142,6 +142,16 @@ dereference_symbols()
 	}
 }
 
+static void
+finish_op()
+{
+#ifdef DEBUG_LEXING
+	fprintf(stderr, "[DBG] Possible end-of-operation encountered at %04x\n", script_pos);
+#endif
+	if (IN_CODE && args_count != args_pos)
+		report_error(0, "Incorrect number of arguments to VM op: Expected %d, got %d\n",
+			     args_count, args_pos);
+}
 
 static void
 end_section()
@@ -159,6 +169,7 @@ handle_section(char *section)
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] Section '%s' encountered at %04x\n", section, script_pos);
 #endif
+	finish_op();
 	if (res_get_pos(script) & 1)
 		res_write_byte(script, 0); /* Align */
 
@@ -243,6 +254,7 @@ define_label(char *label)
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] Label '%s' defined at %04x\n", label, script_pos);
 #endif
+	finish_op();
 	if (add_symbol(symbol_defs, label, res_get_pos(script), file_name, line_nr, 0)) {
 		char *def_file;
 		int def_line;
@@ -306,6 +318,7 @@ handle_identifier(char *ident)
 {
 	int op;
 
+	finish_op();
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] Identifier '%s' encountered at %04x\n", ident, script_pos);
 #endif
@@ -354,22 +367,12 @@ handle_numeric(int num, int word)
 }
 
 static void
-finish_op()
-{
-#ifdef DEBUG_LEXING
-	fprintf(stderr, "[DBG] Possible end-of-operation encountered at %04x\n", script_pos);
-#endif
-	if (IN_CODE && args_count != args_pos)
-		report_error(0, "Incorrect number of arguments to VM op: Expected %d, got %d\n",
-			     args_count, args_pos);
-}
-
-static void
 end_file()
 {
 	int reloc_count = 0;
 	int count_pos = 0;
 	int location;
+	finish_op();
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] End-of-file encountered at %04x\n", script_pos);
 #endif
@@ -402,6 +405,11 @@ end_file()
 }
 
 static void
+end_line()
+{
+}
+
+static void
 handle_string(char *string)
 {
 #ifdef DEBUG_LEXING
@@ -421,8 +429,8 @@ generator_t generator_sci0 = {
 	handle_label,
 	handle_identifier,
 	handle_numeric,
-	finish_op,
 	end_file,
+	end_line,
 	handle_string,
 	handle_comma,
 	handle_said_fragment,
