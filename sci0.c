@@ -338,6 +338,11 @@ handle_identifier(char *ident)
 			if (arg_sizes[i])
 				++op_size;
 		}
+
+		// &rest
+		if (op == 0x58)
+			++op;
+
 		res_write_byte(script, op);
 		args_pos = 0;
 	}

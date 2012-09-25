@@ -177,7 +177,7 @@ dereference_symbols()
 	}
 }
 
-static int /* nonzero if relative */
+static int
 handle_nextop(int num)
 {
 	if (args_pos < args_count) {
@@ -186,11 +186,11 @@ handle_nextop(int num)
 		else
 			res_write_byte(script, num);
 
-		return arg_sizes[args_pos++] & ARGSIZE_RELATIVE;
+		return arg_sizes[args_pos++];
 	} else
 		report_error(0, "Too many arguments to operation\n");
 
-	return 0;
+	return -1;
 }
 
 static res_t *
@@ -297,7 +297,12 @@ handle_label(char *label)
 		res_write_word(r, 0xffff);
 	} else {
 		if (cur_section == SECT_CODE) {
-			if (handle_nextop(0))
+			int argsize = handle_nextop(0);
+			if (argsize == ARGSIZE_BYTE) {
+				report_error(0, "Cannot use label for byte-sized argument\n");
+				return;
+			}
+			if (argsize & ARGSIZE_RELATIVE)
 				refmode = REF_TYPE_RELATIVE | (op_size - (referencing_pos - op_begin));
 		} else {
 			res_write_word(r, 0xffff);
@@ -330,6 +335,11 @@ handle_identifier(char *ident)
 			if (arg_sizes[i])
 				++op_size;
 		}
+
+		// &rest
+		if (op == 0x58)
+			++op;
+
 		res_write_byte(script, op);
 		args_pos = 0;
 	}
