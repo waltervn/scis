@@ -271,6 +271,7 @@ define_label(char *label)
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] Label '%s' defined at %04x\n", label, script_pos);
 #endif
+	finish_op();
 	if (add_symbol(symbol_defs, label, res_get_pos(get_current_res()), file_name, line_nr, cur_res)) {
 		char *def_file;
 		int def_line;
@@ -291,7 +292,6 @@ handle_label(char *label)
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] Label '%s' dereferenced at %04x\n", label, script_pos);
 #endif
-	finish_op();
 	if (cur_res == RES_HEAP) {
 		refmode = REF_TYPE_HEAP;
 		res_write_word(r, 0xffff);
