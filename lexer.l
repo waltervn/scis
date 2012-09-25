@@ -58,7 +58,8 @@ STRING "\"".*[^\\]"\""
 	gen->define_label(yytext);
 }
 
-{IDENTIFIER} {
+{IDENTIFIER} |
+&rest {
 	gen->handle_identifier(yytext);
 }
 
