@@ -45,7 +45,7 @@ OpenFiles:
 CloseFiles:
 ; Closes input and output files
 ; No arguments
-			pushi 2
+			push2
 			push1			; Close
 			lsl 0
 			callk $74 4		; FileIO
@@ -62,8 +62,18 @@ AllocDynmem:
 ; 1:	Size in bytes
 ; Returns:
 ;		Pointer to newly allocated dynmem
-			pushi 2
+			push2
 			push1			; Critical
+			lsp 1
+			callk $72 4		; Memory
+			ret
+
+FreeDynmem:
+; Frees a dynmem buffer
+; Arguments:
+; 1:	Dynmem handle
+			push2
+			pushi 3			; Free
 			lsp 1
 			callk $72 4		; Memory
 			ret
@@ -500,7 +510,42 @@ WritePolygons_Node:
 			callk $34 2		; NextNode
 			jmp &WritePolygons_Loop
 
+FreePolygons:
+; Frees a polygon list
+; Arguments:
+; 1:	Polygon list
+			link 1				; Temp 0: Current node
+			push1
+			lsp 1
+			callk $31 2			; FirstNode
+
+FreePolygons_Loop:
+			sat 0
+			bt &FreePolygons_Node
+
+			push1
+			lsp 1
+			callk $2f 2		; DisposeList
+			ret
+
+FreePolygons_Node:
+				push1
+				push
+				callk $36 2	; NodeValue
+			pushi $6f		; dispose()
+			push0
+			send 4
+
+			push1
+			lst 0
+			callk $34 2		; NextNode
+
+			jmp &FreePolygons_Loop
+
 Game_play:
+			link 1			; Temp 0: Input sets handles
+			ldi 0
+			sat 0
 			push0
 			call &OpenFiles 0
 			push1
@@ -508,16 +553,13 @@ Game_play:
 			call &AllocDynmem 2
 			sal 2
 
+Loop:
 			pushi 4
 			pushi 5			; ReadString
 			lsl 2
 			pushi 1024
 			lsl 1
 			callk $74 8		; FileIO
-
-			push1
-			push1
-			callk $41 2
 
 			pushi 3
 			lsl 2
@@ -526,17 +568,26 @@ Game_play:
 			call &ReadNumbers 6
 			sal 6
 
+			; If we failed to load any points, exit
+			lal 5
+			push2
+			eq?
+			bt &Exit
+
 			push0
 			call &ReadPolygons 0
 
-			pushi 3
-			lsl 6
-			lsl 7
-			pushi 2
-			callk $7e 6		; MergePoly
-
 			push2
-			push
+			lsl 6
+			lat 0
+			bnt &SkipSep
+				push1
+				lofss &SepStr
+				call &WriteString 2
+SkipSep:
+				push1
+				lofss &InputStr
+				call &WriteString 2
 				push1
 				lofss &PolyRaw
 				call &WriteString 2
@@ -547,6 +598,39 @@ Game_play:
 			lsl 7
 			call &WritePolygons 2
 
+			pushi 3
+			lsl 6
+			lsl 7
+			pushi 2
+			callk $7e 6		; MergePoly
+
+			push2
+			push
+				push1
+				lofss &OutputStr
+				call &WriteString 2
+				push1
+				lofss &PolyRaw
+				call &WriteString 2
+			pushi $ffff
+			call &WritePoints 4
+
+			push1
+			lsl 7
+			call &WritePolygons 2
+
+			push1
+			lsl 7
+			call &FreePolygons 2
+
+			push1
+			lsl 6
+			call &FreeDynmem 2
+
+			+at 0
+			jmp &Loop
+
+Exit:
 			push0
 			call &CloseFiles 0
 			ret
@@ -580,3 +664,6 @@ PolyType:	"%d:"
 PolyPoint:	" (%d, %d)"
 PolyEnd:	";\n"
 PolyRaw:	"R:"
+InputStr:	"Input:\n"
+OutputStr:	"Output:\n"
+SepStr:		"\n"
