@@ -2,7 +2,7 @@
 			&Game_obj
 
 .locals
-Points:		0				; 0: Output file handle
+			0				; 0: Output file handle
 			0				; 1: Input file handle
 			0				; 2: Dynmem buffer
 
@@ -12,6 +12,15 @@ Points:		0				; 0: Output file handle
 
 			0				; 6: Array to be passed to MergePoly
 			0				; 7: Polygon list
+
+			0				; 8-12: Plot colors 0-4
+			0
+			0
+			0
+			0
+
+			0				; 13: Event
+
 .class
 Game_methDict:
 			1				; Number of functions
@@ -103,10 +112,6 @@ IsNumberChar:
 ;		1 if the character is part of a number, 0 otherwise
 			lsp 1
 			dup
-			ldi 36			; '$'
-			eq?
-			bt &IsNumberChar_Yes
-			dup
 			ldi 45			; '-'
 			eq?
 			bt &IsNumberChar_Yes
@@ -116,22 +121,6 @@ IsNumberChar:
 			bt &IsNumberChar_No
 			dup
 			ldi 57			; '9'
-			le?
-			bt &IsNumberChar_Yes
-			dup
-			ldi 64			; 'A'
-			lt?
-			bt &IsNumberChar_No
-			dup
-			ldi 70			; 'F'
-			le?
-			bt &IsNumberChar_Yes
-			dup
-			ldi 97			; 'a'
-			lt?
-			bt &IsNumberChar_No
-			dup
-			ldi 102			; 'f'
 			le?
 			bt &IsNumberChar_Yes
 IsNumberChar_No:
@@ -322,6 +311,127 @@ WritePoints_End:
 			call &WriteString 2
 			ret
 
+FindColor:
+; Finds a close color in the palette
+; Arguments:
+; 1:		r
+; 2:		g
+; 3:		b
+			push1
+			pushi 5
+			&rest 1
+			callk $6f 2
+			ret
+
+DrawLine:
+; Draws a line
+; Arguments:
+; 1:		x1
+; 2:		y1
+; 3:		x2
+; 4:		y2
+; 5:		color
+; 6:		priority (optional)
+; 7:		control (optional)
+			pushi 6
+			pushi 4
+			lsp 2
+			lsp 1
+			lsp 4
+			lsp 3
+			lap 5
+			lsli 8
+			callk $6c 12
+			ret
+
+DrawPoints:
+; Draws points from an array to the screen
+; If $7777 is found in the input, reading is stopped
+; Arguments:
+; 1:	Array pointer
+; 2:	Number of points in array, or $ffff for terminated list
+; 3:	Color
+			link 6			; Temp 0+1: (prevx, prevy)
+							; Temp 2+3: (x, y)
+							; Temp 4+5: (firstx, firsty)
+
+			; Check for 0 points in array
+			lap 2
+			bnt &DrawPoints_End
+
+			; Load x-coordinate of first point
+			push1
+			lsp 1
+			+ap 1
+			+ap 1
+			call &ReadRawNumber 2
+			sat 0
+			sat 4
+			pushi $7777
+			eq?
+			bt &DrawPoints_End
+
+			; Load y-coordinate of first point
+			push1
+			lsp 1
+			+ap 1
+			+ap 1
+			call &ReadRawNumber 2
+			sat 1
+			sat 5
+
+			; Check for 1 point in array
+			-ap 2
+			bnt &DrawPoints_Finish
+
+DrawPoints_Loop:
+			; Load next x-coordinate
+			push1
+			lsp 1
+			+ap 1
+			+ap 1
+			call &ReadRawNumber 2
+			sat 2
+			pushi $7777
+			eq?
+			bt &DrawPoints_Finish
+
+			; Load next y-coordinate
+			push1
+			lsp 1
+			+ap 1
+			+ap 1
+			call &ReadRawNumber 2
+			sat 3
+
+			pushi 5
+			lst 0
+			lst 1
+			lst 2
+			lst 3
+			lsp 3
+			call &DrawLine 10
+
+			lat 2
+			sat 0
+			lat 3
+			sat 1
+			
+			-ap 2
+			bt &DrawPoints_Loop
+
+DrawPoints_Finish:
+			pushi 5
+			lst 0
+			lst 1
+			lst 4
+			lst 5
+			lsp 3
+			call &DrawLine 10
+
+DrawPoints_End:
+			ret
+
 ReadPolygon:
 ; Reads polygon spec from next line in input file
 ; Returns:
@@ -403,6 +513,37 @@ ReadRawNumber:
 			pushi 5			; Peek
 			lsp 1
 			callk $72 4		; Memory
+			ret
+
+DrawPolygon:
+;1:		Polygon
+			link 1			; 0: Polygon type
+			pushi $1f		; type
+			push0
+			lap 1
+			send 4
+			sat 0
+
+			; Ignore polygons marked by MergePoly
+			pushi $10
+			and
+			bt &DrawPolygon_End
+
+			pushi 3
+				pushi $57		; points
+				push0
+				lap 1
+				send 4
+			push
+				pushi $56		; size
+				push0
+				lap 1
+				send 4
+			push
+			lst 0
+			call &DrawPoints 6
+
+DrawPolygon_End:
 			ret
 
 WritePolygon:
@@ -510,6 +651,32 @@ WritePolygons_Node:
 			callk $34 2		; NextNode
 			jmp &WritePolygons_Loop
 
+DrawPolygons:
+; Draws a polygon list to the screen
+; Arguments:
+; 1:	Polygon list
+			link 1				; Temp 0: Current node
+			push1
+			lsp 1
+			callk $31 2			; FirstNode
+
+DrawPolygons_Loop:
+			sat 0
+			bt &DrawPolygons_Node
+			ret
+
+DrawPolygons_Node:
+			push1
+				push1
+				push
+				callk $36 2	; NodeValue
+			push
+			call &DrawPolygon 2
+			push1
+			lst 0
+			callk $34 2		; NextNode
+			jmp &DrawPolygons_Loop
+
 FreePolygons:
 ; Frees a polygon list
 ; Arguments:
@@ -542,8 +709,92 @@ FreePolygons_Node:
 
 			jmp &FreePolygons_Loop
 
+Redraw:
+			pushi 5
+			pushi 13		; RedrawBox
+			push0
+			push0
+			pushi 190
+			pushi 320
+			callk $6c 10	; Graph
+			ret
+
+ClearScreen:
+			pushi 5
+			pushi  10		; FillBoxBackground
+			push0
+			push0
+			pushi 190
+			pushi 320
+			callk $6c 10	; Graph
+			ret
+
+InitColors:
+			pushi 3
+			push0
+			pushi $ff
+			push0
+			call &FindColor 6
+			sal 8
+
+			pushi 3
+			push0
+			push0
+			pushi $ff
+			call &FindColor 6
+			sal 9
+
+			pushi 3
+			pushi $ff
+			push0
+			push0
+			call &FindColor 6
+			sal 10
+
+			pushi 3
+			pushi $ff
+			pushi $ff
+			push0
+			call &FindColor 6
+			sal 11
+
+			pushi 3
+			push0
+			pushi $ff
+			pushi $ff
+			call &FindColor 6
+			sal 12
+			ret
+
+WaitKeyDown:
+			push2
+			pushi 5			; Keyboard or mouse press
+			lsl 13
+			callk $1c 4
+			bnt &WaitKeyDown
+			ret
+
 Game_play:
-			link 1			; Temp 0: Input sets handles
+			link 3			; Temp 0: Input sets handled
+							; Temp 1: MergePoly output
+							; Temp 2: Interactive mode flag
+			
+			ldi 0
+			sat 2
+
+			class $7		; Event
+			pushi $6d		; new()
+			push0
+			send 4
+			sal 13
+
+			push1
+			push0			; Cursor off
+			callk $28 2		; SetCursor
+
+			push0
+			call &InitColors 0
+
 			ldi 0
 			sat 0
 			push0
@@ -561,6 +812,19 @@ Loop:
 			lsl 1
 			callk $74 8		; FileIO
 
+			lat 0
+			bt &SkipCommandCheck
+
+			pushi 2
+			lsl 2
+			lofss &Interact
+			callk $45 4			; StrCmp
+			bt &SkipCommandCheck ; Command not found, try reading numbers
+
+			+at 2
+			jmp &Loop
+
+SkipCommandCheck:
 			pushi 3
 			lsl 2
 			push0
@@ -598,11 +862,34 @@ SkipSep:
 			lsl 7
 			call &WritePolygons 2
 
+			lat 2
+			bnt &SkipDraw_1
+
+			push0
+			call &ClearScreen 0
+
+			pushi 3
+			lsl 6
+			pushi $ffff
+			pushi 4
+			call &DrawPoints 6
+
+			push1
+			lsl 7
+			call &DrawPolygons 2
+
+			push0
+			call &Redraw 0
+			push0
+			call &WaitKeyDown 0
+
+SkipDraw_1:
 			pushi 3
 			lsl 6
 			lsl 7
 			pushi 2
 			callk $7e 6		; MergePoly
+			sat 1
 
 			push2
 			push
@@ -619,12 +906,38 @@ SkipSep:
 			lsl 7
 			call &WritePolygons 2
 
+			lat 2
+			bnt &SkipDraw_2
+
+			push0
+			call &ClearScreen 0
+
+			pushi 3
+			lst 1
+			pushi $ffff
+			pushi 4
+			call &DrawPoints 6
+
+			push1
+			lsl 7
+			call &DrawPolygons 2
+
+			push0
+			call &Redraw 0
+			push0
+			call &WaitKeyDown 0
+
+SkipDraw_2:
 			push1
 			lsl 7
 			call &FreePolygons 2
 
 			push1
 			lsl 6
+			call &FreeDynmem 2
+
+			push1
+			lst 1
 			call &FreeDynmem 2
 
 			+at 0
@@ -667,3 +980,4 @@ PolyRaw:	"R:"
 InputStr:	"Input:\n"
 OutputStr:	"Output:\n"
 SepStr:		"\n"
+Interact:	"interactive"
