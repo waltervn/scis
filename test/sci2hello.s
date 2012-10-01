@@ -36,7 +36,7 @@ Hello_obj:
 
 .code
 Hello_play:
-				; Open stdout.txt
+				; Open output.txt
 				pushi 3
 				push0			; Open
 				lofss &Filename
@@ -54,7 +54,7 @@ Hello_play:
 				lofss &Greeting
 				callk $5d 6		; FileIO
 
-				pushi 2
+				push2
 				push1			; Close
 				pprev			; Handle
 				callk $5d 4		; FileIO
