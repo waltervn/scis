@@ -223,8 +223,20 @@ char *ops[128] = {
 void
 use_absolute_lofs()
 {
-	formats[0x39][0] = Script_Word;
-	formats[0x3a][0] = Script_Word;
+	formats[0x39][0] = Script_Word; /* lofsa */
+	formats[0x3a][0] = Script_Word; /* lofss */
+}
+
+void
+use_wide_calls()
+{
+	formats[0x20][1] = Script_Word; /* call */
+	formats[0x21][1] = Script_Word; /* callk */
+	formats[0x22][1] = Script_Word; /* callb */
+	formats[0x23][2] = Script_Word; /* calle */
+	formats[0x25][0] = Script_Word; /* send */
+	formats[0x2a][0] = Script_Word; /* self */
+	formats[0x2b][1] = Script_Word; /* super */
 }
 
 int

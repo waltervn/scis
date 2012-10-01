@@ -41,6 +41,7 @@ typedef struct {
 	char *script_filename;
 	char *heap_filename;
 	int wide_exports;
+	int wide_calls;
 	int absolute_lofs;
 	int dump_results;
 } options_t;
@@ -130,6 +131,11 @@ report_error(int critical, char *fmt, ...);
 void
 use_absolute_lofs();
 /* Generate absolute lofs instructions
+*/
+
+void
+use_wide_calls();
+/* Generate calls with word-size frame size
 */
 
 /*==========---------------=========*/

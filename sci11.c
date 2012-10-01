@@ -81,7 +81,10 @@ init(const options_t *options)
 	symbol_usages = new_symtab(1);
 	symbol_reloc_script = new_symtab(1);
 	symbol_reloc_heap = new_symtab(1);
+
 	use_absolute_lofs();
+	if (options->wide_calls)
+		use_wide_calls();
 
 	script = res_alloc(0x82, MAX_SCRIPT_SIZE);
 	if (!script)
@@ -89,7 +92,7 @@ init(const options_t *options)
 
 	res_write_word(script, 0xffff); /* Pointer to relocation block */
 	res_write_word(script, 0); /* Unknown */
-	res_write_word(script, 1); /* Unknown */
+	res_write_word(script, 0); /* Unknown */
 	res_write_word(script, 0); /* Number of exports */
 
 	heap = res_alloc(0x91, MAX_HEAP_SIZE);

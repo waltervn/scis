@@ -59,6 +59,7 @@ print_usage()
 	       "\t\t1: late SCI0 and early SCI1 (default)\n"
 	       "\t\t2: late SCI1\n"
 	       "\t\t3: SCI1.1\n"
+	       "\t\t4: SCI2\n"
 	       "\t-o <f>:\tWrite script to <f> (defaults to 'sci.scr')\n"
 	       "\t-H <f>:\tWrite heap to <f> (defaults to 'sci.hep')\n"
 	       );
@@ -116,6 +117,7 @@ main (int argc, char **argv)
 	options.script_filename = "sci.scr";
 	options.heap_filename = "sci.hep";
 	options.wide_exports = 0;
+	options.wide_calls = 0;
 	options.absolute_lofs = 0;
 	options.dump_results = 0;
 	gen = &generator_sci0;
@@ -148,6 +150,9 @@ main (int argc, char **argv)
 				options.absolute_lofs = 1;
 				gen = &generator_sci0;
 				break;
+			case 4:
+				options.wide_calls = 1;
+				/* Fall-through */
 			case 3:
 				gen = &generator_sci11;
 				break;
