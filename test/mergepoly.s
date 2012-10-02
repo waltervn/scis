@@ -21,7 +21,7 @@
 
 			0				; 13: Event
 
-.class
+.dict
 Game_methDict:
 			1				; Number of functions
 			$27				; play()

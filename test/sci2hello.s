@@ -6,10 +6,10 @@
 .locals
 				0
 
-.class
+.dict
 Hello_methDict:
-				1
-				$33
+				1				; number of functions
+				$33				; play()
 				&Hello_play
 
 .object

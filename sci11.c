@@ -35,7 +35,7 @@ static int dump_results = 0;
 
 typedef enum {
 	SECT_EXPORTS = 1,
-	SECT_CLASS,
+	SECT_DICT,
 	SECT_CODE,
 	SECT_LOCALS,
 	SECT_OBJECT,
@@ -48,6 +48,7 @@ typedef enum {
 } res_type_t;
 
 static int cur_section = 0;
+static int prev_script_sect = 0, prev_heap_sect = 0;
 static int section_start;
 static res_type_t cur_res;
 static res_t *script, *heap;
@@ -63,7 +64,7 @@ static struct {
 	res_type_t res;
 } sections[] = {
 	{"exports", SECT_EXPORTS, RES_SCRIPT},
-	{"class", SECT_CLASS, RES_SCRIPT},
+	{"dict", SECT_DICT, RES_SCRIPT},
 	{"code", SECT_CODE, RES_SCRIPT},
 	{"locals", SECT_LOCALS, RES_HEAP},
 	{"object", SECT_OBJECT, RES_HEAP},
@@ -105,6 +106,52 @@ init(const options_t *options)
 	cur_res = RES_SCRIPT;
 
 	return 1;
+}
+
+static void
+verify_objects()
+{
+	/* SCI2 does not use -propDict- and -methDict- when reading in object
+	** dictionaries. Instead, it reads them sequentially from the script.
+	** Here we check that the dictionaries are indeed in the proper order.
+	** Currently we also enforce this for SCI1.1.
+	*/
+
+	int dictpos = 8 + res_read_word(script, 6) * 2;
+	int objpos = 4 + res_read_word(heap, 2) * 2;
+
+	while (res_read_word(heap, objpos) == 0x1234) {
+		int size = res_read_word(heap, objpos + 2);
+		int propdict = res_read_word(heap, objpos + 4);
+		int methdict = res_read_word(heap, objpos + 6);
+		int species = res_read_word(heap, objpos + 10);
+		int isclass = res_read_word(heap, objpos + 14) & 0x8000;
+		int methods;
+
+		if (isclass && species == 0xffff)
+			report_error_internally(__FILE__, __LINE__, 0, "Class flag set, but -script- not specified for object at heap offset %04x\n", objpos);
+
+		if (!isclass && species != 0xffff)
+			report_error_internally(__FILE__, __LINE__, 0, "Class flag not set, but -script- specified for object at heap offset %04x\n", objpos);
+
+		if (dictpos != propdict) {
+			report_error_internally(__FILE__, __LINE__, 0, "Non-sequential -propDict- detected for object at heap offset %04x\n", objpos);
+			dictpos = propdict;
+		}
+
+		if (isclass)
+			dictpos += size * 2;
+
+		if (dictpos != methdict) {
+			report_error_internally(__FILE__, __LINE__, 0, "Non-sequential -methDict- detected for object at heap offset %04x\n", objpos);
+			dictpos = methdict;
+		}
+
+		methods = res_read_word(script, dictpos);
+		dictpos += 2 + (methods * 4);
+
+		objpos += size * 2;
+	}
 }
 
 static void
@@ -222,6 +269,8 @@ end_section()
 	res_t *res = get_current_res();
 	int pos = res_get_pos(res);
 
+	finish_op();
+
 	if (cur_section == SECT_EXPORTS)
 		res_modify_word(res, (pos - 8) >> 1, 6);
 	else if (cur_section == SECT_LOCALS)
@@ -234,11 +283,10 @@ end_section()
 static void
 handle_section(char *section)
 {
-	int i = 0, section_type, section_res;
+	int i = 0, section_type, section_res, prev_section, allowed = 1;
 #ifdef DEBUG_LEXING
 	fprintf(stderr, "[DBG] Section '%s' encountered at %04x\n", section, script_pos);
 #endif
-	finish_op();
 	end_section();
 
 	section_type = 0;
@@ -253,8 +301,30 @@ handle_section(char *section)
 	if (section_type == 0)
 		report_error(1, "Unknown kind of section '%s'\n", section);
 
+	if (cur_section != 0) {
+		if (cur_res == RES_SCRIPT)
+			prev_script_sect = cur_section;
+		else
+			prev_heap_sect = cur_section;
+	}
+
 	cur_section = section_type;
 	cur_res = section_res;
+	prev_section = (cur_res == RES_SCRIPT ? prev_script_sect : prev_heap_sect);
+
+	if (cur_section == SECT_EXPORTS || cur_section == SECT_LOCALS) {
+		/* Exports and locals must come first */
+		allowed = prev_section == 0;
+	} else if (prev_section == SECT_STRINGS || prev_section == SECT_CODE) {
+		/* Nothing can follow strings or code */
+		allowed = 0;
+	}
+
+	if (!allowed) {
+		report_error(1, "Section '%s' not allowed after section '%s'\n",
+		             section, sections[prev_section - 1].name);
+	}
+
 	section_start = res_get_pos(get_current_res());
 }
 
@@ -339,7 +409,7 @@ handle_identifier(char *ident)
 				++op_size;
 		}
 
-		// &rest
+		/* &rest */
 		if (op == 0x58)
 			++op;
 
@@ -370,10 +440,10 @@ static void
 end_file()
 {
 	end_section();
-	finish_op();
 	dereference_symbols();
 	write_relocation_table(script, symbol_reloc_script);
 	write_relocation_table(heap, symbol_reloc_heap);
+	verify_objects();
 }
 
 static void
