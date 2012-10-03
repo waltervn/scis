@@ -32,8 +32,6 @@ Hello_obj:
 				0				; handsOffCode
 				0				; handsOnCode
 
-				0				; Object list terminator (FIXME)
-
 .code
 Hello_play:
 				; Open output.txt

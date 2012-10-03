@@ -325,6 +325,11 @@ handle_section(char *section)
 		             section, sections[prev_section - 1].name);
 	}
 
+	if (cur_section == SECT_STRINGS) {
+		/* Terminate the object list first */
+		res_write_word(heap, 0);
+	}
+
 	section_start = res_get_pos(get_current_res());
 }
 
@@ -440,6 +445,11 @@ static void
 end_file()
 {
 	end_section();
+
+	/* If we haven't written any strings, we still need to terminate the object list */
+	if (cur_section != SECT_STRINGS && prev_heap_sect != SECT_STRINGS)
+		res_write_word(heap, 0);
+
 	dereference_symbols();
 	write_relocation_table(script, symbol_reloc_script);
 	write_relocation_table(heap, symbol_reloc_heap);

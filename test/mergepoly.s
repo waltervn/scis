@@ -967,8 +967,6 @@ Game_obj:
 			0
 			0
 
-			0				; Fixme
-
 .strings
 Game_name:	"MergePoly"
 Infile:		"input.txt"
