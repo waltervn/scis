@@ -163,5 +163,6 @@ extern generator_t *gen;
 void report_error_internally(char * _file_name, int _line_nr, int critical, char *fmt, ...);
 void report_error(int critical, char *fmt, ...);
 int errors_found();
+void set_filename(const char *f);
 
 #endif

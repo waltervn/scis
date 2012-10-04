@@ -28,6 +28,20 @@ char *file_name = NULL;
 
 static int have_comma = 0;
 
+static void
+handle_line_directive(const char *s)
+{
+	char *temp = malloc(strlen(s) + 1);
+	int found = sscanf(s, "%d \"%[^\"]", &line_nr, temp);
+
+	if (found <= 0)
+		report_error_internally(__FILE__, __LINE__, 1, "Failed to parse cpp directive '%s'", yytext);
+
+	if (found == 2)
+		set_filename(temp);
+	free(temp);
+}
+
 %}
 
 DIGIT [0-9]
@@ -41,6 +55,9 @@ STRING "\"".*[^\\]"\""
 
 %%
 
+^"# ".*\n handle_line_directive(yytext + 1);
+
+^"#line ".*\n handle_line_directive(yytext + 5);
 
 \.{IDENTIFIER} {
 	gen->handle_section(yytext + 1);

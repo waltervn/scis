@@ -1,3 +1,5 @@
+#include "symbols.h"
+
 .exports
 			&Game_obj
 
@@ -34,20 +36,20 @@ OpenFiles:
 			pushi 2
 			pushi 4			; Unlink
 			lofss &Outfile
-			callk $74 4		; FileIO
+			callk k_FileIO 4
 
 			pushi 3
 			push0			; Open
 			lofss &Outfile
 			push0
-			callk $74 6		; FileIO
+			callk k_FileIO 6
 			sal 0
 
 			pushi 3
 			push0			; Open
 			lofss &Infile
 			push1
-			callk $74 6		; FileIO
+			callk k_FileIO 6
 			sal 1
 			ret
 
@@ -57,12 +59,12 @@ CloseFiles:
 			push2
 			push1			; Close
 			lsl 0
-			callk $74 4		; FileIO
+			callk k_FileIO 4
 
 			pushi 2
 			push1			; Close
 			lsl 1
-			callk $74 4		; FileIO
+			callk k_FileIO 4
 			ret
 
 AllocDynmem:
@@ -74,7 +76,7 @@ AllocDynmem:
 			push2
 			push1			; Critical
 			lsp 1
-			callk $72 4		; Memory
+			callk k_Memory 4
 			ret
 
 FreeDynmem:
@@ -84,7 +86,7 @@ FreeDynmem:
 			push2
 			pushi 3			; Free
 			lsp 1
-			callk $72 4		; Memory
+			callk k_Memory 4
 			ret
 
 WriteString:
@@ -95,13 +97,13 @@ WriteString:
 			pushi 1
 			lsl 2
 			&rest 1
-			callk $48 2		; Format
+			callk k_Format 2
 
 			pushi 3
 			pushi 6			; WriteString
 			lsl 0
 			lsl 2
-			callk $74 6		; FileIO
+			callk k_FileIO 6
 			ret
 
 IsNumberChar:
@@ -225,7 +227,7 @@ ReadStrNumber:
 			lap 2
 			add
 			push
-			callk $4a 2		; ReadNumber
+			callk k_ReadNumber 2
 			ret
 
 ReadNumbers:
@@ -273,7 +275,7 @@ ReadNumbers_Output:
 			lea 4 2
 			push
 			lst 0
-			callk $72 8		; Memory
+			callk k_Memory 8
 			lat 0
 			sal 5
 			lat 1
@@ -320,7 +322,7 @@ FindColor:
 			push1
 			pushi 5
 			&rest 1
-			callk $6f 2
+			callk k_Palette 2
 			ret
 
 DrawLine:
@@ -341,7 +343,7 @@ DrawLine:
 			lsp 3
 			lap 5
 			lsli 8
-			callk $6c 12
+			callk k_Graph 12
 			ret
 
 DrawPoints:
@@ -445,7 +447,7 @@ ReadPolygon:
 			lsl 2
 			pushi 1024
 			lsl 1
-			callk $74 8		; FileIO
+			callk k_FileIO 8
 
 			push2
 			lsl 2
@@ -459,19 +461,19 @@ ReadPolygon:
 			ret
 
 ReadPolygon_0:
-			class $24		; Polygon
-			pushi $6d		; new()
+			class c_Polygon
+			pushi s_new
 			push0
 			send 4
 			sat 0
 
-			pushi $1f		; type
+			pushi s_type
 			push1
 			lsl 3
-			pushi $100		; dynamic
+			pushi s_dynamic
 			push1
 			push1
-			pushi $57		; points
+			pushi s_points
 			push1
 				pushi 3
 				lsl 2
@@ -479,7 +481,7 @@ ReadPolygon_0:
 				push0
 				call &ReadNumbers 6
 			push
-			pushi $56		; size
+			pushi s_size
 			push1
 				lsl 5
 				ldi 2
@@ -502,7 +504,7 @@ WriteRawNumber:
 				add
 			push
 			lsp 3
-			callk $72 6		; Memory
+			callk k_Memory 6
 			ret
 
 ReadRawNumber:
@@ -512,13 +514,13 @@ ReadRawNumber:
 			pushi 2
 			pushi 5			; Peek
 			lsp 1
-			callk $72 4		; Memory
+			callk k_Memory 4
 			ret
 
 DrawPolygon:
 ;1:		Polygon
 			link 1			; 0: Polygon type
-			pushi $1f		; type
+			pushi s_type
 			push0
 			lap 1
 			send 4
@@ -530,12 +532,12 @@ DrawPolygon:
 			bt &DrawPolygon_End
 
 			pushi 3
-				pushi $57		; points
+				pushi s_points
 				push0
 				lap 1
 				send 4
 			push
-				pushi $56		; size
+				pushi s_size
 				push0
 				lap 1
 				send 4
@@ -553,18 +555,18 @@ WritePolygon:
 			link 3
 			push2
 			lofss &PolyType
-				pushi $1f
+				pushi s_type
 				push0
 				lap 1
 				send 4
 			push
 			call &WriteString 4
-			pushi $57
+			pushi s_points
 			push0
 			lap 1
 			send 4
 			sat 1
-			pushi $56
+			pushi s_size
 			push0
 			lap 1
 			send 4
@@ -606,7 +608,7 @@ WritePolygon_2:
 ReadPolygons:
 ; Reads polygons from the input file and stores them in a list in local 7
 			push0
-			callk $2e 0		; NewList
+			callk k_NewList 0
 			sal 7
 
 ReadPolygons_Loop:
@@ -620,9 +622,9 @@ ReadPolygons_Add:
 				push2
 				push
 				push
-				callk $30 4		; NewNode
+				callk k_NewNode 4
 			push
-			callk $39 4			; AddToEnd
+			callk k_AddToEnd 4
 			jmp &ReadPolygons_Loop		
 
 WritePolygons:
@@ -632,7 +634,7 @@ WritePolygons:
 			link 1				; Temp 0: Current node
 			push1
 			lsp 1
-			callk $31 2			; FirstNode
+			callk k_FirstNode 2
 
 WritePolygons_Loop:
 			sat 0
@@ -643,12 +645,12 @@ WritePolygons_Node:
 			push1
 				push1
 				push
-				callk $36 2	; NodeValue
+				callk k_NodeValue 2
 			push
 			call &WritePolygon 2
 			push1
 			lst 0
-			callk $34 2		; NextNode
+			callk k_NextNode 2
 			jmp &WritePolygons_Loop
 
 DrawPolygons:
@@ -658,7 +660,7 @@ DrawPolygons:
 			link 1				; Temp 0: Current node
 			push1
 			lsp 1
-			callk $31 2			; FirstNode
+			callk k_FirstNode 2
 
 DrawPolygons_Loop:
 			sat 0
@@ -669,12 +671,12 @@ DrawPolygons_Node:
 			push1
 				push1
 				push
-				callk $36 2	; NodeValue
+				callk k_NodeValue 2
 			push
 			call &DrawPolygon 2
 			push1
 			lst 0
-			callk $34 2		; NextNode
+			callk k_NextNode 2
 			jmp &DrawPolygons_Loop
 
 FreePolygons:
@@ -684,7 +686,7 @@ FreePolygons:
 			link 1				; Temp 0: Current node
 			push1
 			lsp 1
-			callk $31 2			; FirstNode
+			callk k_FirstNode 2
 
 FreePolygons_Loop:
 			sat 0
@@ -692,20 +694,20 @@ FreePolygons_Loop:
 
 			push1
 			lsp 1
-			callk $2f 2		; DisposeList
+			callk k_DisposeList 2
 			ret
 
 FreePolygons_Node:
 				push1
 				push
-				callk $36 2	; NodeValue
-			pushi $6f		; dispose()
+				callk k_NodeValue 2
+			pushi s_dispose
 			push0
 			send 4
 
 			push1
 			lst 0
-			callk $34 2		; NextNode
+			callk k_NextNode 2
 
 			jmp &FreePolygons_Loop
 
@@ -716,7 +718,7 @@ Redraw:
 			push0
 			pushi 190
 			pushi 320
-			callk $6c 10	; Graph
+			callk k_Graph 10
 			ret
 
 ClearScreen:
@@ -726,7 +728,7 @@ ClearScreen:
 			push0
 			pushi 190
 			pushi 320
-			callk $6c 10	; Graph
+			callk k_Graph 10
 			ret
 
 InitColors:
@@ -770,7 +772,7 @@ WaitKeyDown:
 			push2
 			pushi 5			; Keyboard or mouse press
 			lsl 13
-			callk $1c 4
+			callk k_GetEvent 4
 			bnt &WaitKeyDown
 			ret
 
@@ -782,15 +784,15 @@ Game_play:
 			ldi 0
 			sat 2
 
-			class $7		; Event
-			pushi $6d		; new()
+			class c_Event
+			pushi s_new
 			push0
 			send 4
 			sal 13
 
 			push1
 			push0			; Cursor off
-			callk $28 2		; SetCursor
+			callk k_SetCursor 2
 
 			push0
 			call &InitColors 0
@@ -810,7 +812,7 @@ Loop:
 			lsl 2
 			pushi 1024
 			lsl 1
-			callk $74 8		; FileIO
+			callk k_FileIO 8
 
 			lat 0
 			bt &SkipCommandCheck
@@ -818,7 +820,7 @@ Loop:
 			pushi 2
 			lsl 2
 			lofss &Interact
-			callk $45 4			; StrCmp
+			callk k_StrCmp 4
 			bt &SkipCommandCheck ; Command not found, try reading numbers
 
 			+at 2
@@ -888,7 +890,7 @@ SkipDraw_1:
 			lsl 6
 			lsl 7
 			pushi 2
-			callk $7e 6		; MergePoly
+			callk k_MergePoly 6
 			sat 1
 
 			push2
@@ -956,7 +958,7 @@ Game_obj:
 			&Game_methDict
 			0
 			$ffff
-			$44		; Game
+			c_Game
 			0
 			&Game_name
 			0

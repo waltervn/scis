@@ -108,6 +108,16 @@ errors_found()
 	return errors;
 }
 
+void
+set_filename(const char *f)
+{
+	if (file_name)
+		free(file_name);
+
+	file_name = malloc(strlen(f) + 1);
+	strcpy(file_name, f);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -176,7 +186,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	file_name = "-";
+	set_filename("-");
 
 	if (optind < argc) {
 		if (optind + 1 < argc) {
@@ -184,7 +194,7 @@ main (int argc, char **argv)
 			print_usage();
 			exit(1);
 		}
-		file_name = argv[optind];
+		set_filename(argv[optind]);
 		
 	} else {
 		print_usage();
@@ -203,6 +213,7 @@ main (int argc, char **argv)
 	gen->init(&options);
 	yylex();
 	gen->deinit();
+	free(file_name);
 
 	return 0;
 }
