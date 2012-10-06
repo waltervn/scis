@@ -31,7 +31,7 @@
 
 #ifdef HAVE_LIBMCPP
 	#include <mcpp_lib.h>
-#elif defined(EXTCPP) && defined(HAVE_FORK) && defined(HAVE_PIPE) \
+#elif defined(RTCPP) && defined(HAVE_FORK) && defined(HAVE_PIPE) \
       && defined(HAVE_DUP2) && defined(HAVE__EXIT)
 	#define EXEC_CPP
 #endif
@@ -41,6 +41,10 @@ extern generator_t generator_sci11;
 
 static int errors = 0;
 static int filedes[2];
+static char **include_paths = NULL;
+static int nr_include_paths = 0;
+static char **defines = NULL;
+static int nr_defines = 0;
 generator_t *gen = NULL;
 
 void
@@ -60,10 +64,13 @@ print_disclaimer()
 void
 print_usage()
 {
-	printf("scis [-h] [-v] [-d] [-g generation] [-o scrfile] [-H hepfile] <source.s>\n"
+	printf("Usage: scis [OPTIONS] [FILE]\n"
+	       "Translates SCI assembly code to bytecode\n\n"
 	       "Options:\n"
 	       "\t-h:\tUsage help\n"
 	       "\t-v:\tPrint version\n"
+	       "\t-I <d>:\tAdd directory <d> to header search path list\n"
+	       "\t-D <m>:\tDefine macro <m>\n"
 	       "\t-d:\tDump binary result to stdout\n"
 	       "\t-g <n>:\tSCI generation to target\n"
 	       "\t\t1: late SCI0 and early SCI1 (default)\n"
@@ -128,19 +135,66 @@ set_filename(const char *f)
 	strcpy(file_name, f);
 }
 
+char **
+build_exec_args(const char *cmd, int *size)
+{
+	/* Add two for filename and NULL */
+	int extra_entries = 2 + nr_include_paths + nr_defines;
+	char **cpp_args = malloc(sizeof(char *) * extra_entries);
+	char *arg;
+	int i = 0, j;
+	char *cppcmd = malloc(strlen(cmd) + 1);
+	strcpy(cppcmd, cmd);
+
+	for (arg = strtok(cppcmd, " "); arg; arg = strtok(NULL, " ")) {
+		cpp_args = realloc(cpp_args, sizeof(char *) * (i + 1 + extra_entries));
+		cpp_args[i] = malloc(strlen(arg) + 1);
+		strcpy(cpp_args[i++], arg);
+	}
+	for (j = 0; j < nr_include_paths; j++) {
+		cpp_args[i] = malloc(strlen(include_paths[j]) + 3);
+		strcpy(cpp_args[i], "-I");
+		strcat(cpp_args[i++], include_paths[j]);
+	}
+	for (j = 0; j < nr_defines; j++) {
+		cpp_args[i] = malloc(strlen(defines[j]) + 3);
+		strcpy(cpp_args[i], "-D");
+		strcat(cpp_args[i++], defines[j]);
+	}
+	cpp_args[i] = malloc(strlen(file_name) + 1);
+	strcpy(cpp_args[i++], file_name);
+	cpp_args[i] = NULL;
+	if (size)
+		*size = i;
+	free(cppcmd);
+	return cpp_args;
+}
+
+char **
+free_exec_args(char **args)
+{
+	int i = 0;
+	char **arg;
+	for (arg = args; *arg; ++arg)
+		free(*arg);
+	free(args);
+}
+
 #ifdef HAVE_LIBMCPP
 
 void
 setup_cpp()
 {
 	char *buf;
-	char *cpp_args[] = { "mcpp", file_name };
+	int size;
+	char **args = build_exec_args("mcpp -I-", &size);
 	mcpp_use_mem_buffers(1);
-	mcpp_lib_main(2, cpp_args);
+	mcpp_lib_main(size, args);
 	buf = mcpp_get_mem_buffer(ERR);
 	if (buf)
 		fprintf(stderr, "%s", buf);
 	buf = mcpp_get_mem_buffer(OUT);
+	free_exec_args(args);
 	yy_scan_string(buf);
 }
 
@@ -160,26 +214,14 @@ setup_cpp()
 	}
 
 	if (!pid) {
-		/* Child */
-		char **cpp_args = NULL;
-		char *arg;
-		int i = 0;
-		char *cppcmd = malloc(strlen(EXTCPP) + 1);
-		strcpy(cppcmd, EXTCPP);
-	
-		for (arg = strtok(cppcmd, " "); arg; arg = strtok(NULL, " ")) {
-			cpp_args = realloc(cpp_args, sizeof(char *) * (i + 3));
-			cpp_args[i++] = arg;
-		}
-		cpp_args[i++] = file_name;
-		cpp_args[i] = NULL;
-	
+		char **args = build_exec_args(RTCPP, NULL);
+
 		close(filedes[0]);
 		dup2(filedes[1], STDOUT_FILENO);
 		close(filedes[1]);
 	
-		execvp(cpp_args[0], cpp_args);
-		perror(cpp_args[0]);
+		execvp(args[0], args);
+		perror(args[0]);
 		_exit(1);
 	}
 
@@ -187,7 +229,6 @@ setup_cpp()
 	close(filedes[1]);
 	dup2(filedes[0], STDIN_FILENO);
 	close(filedes[0]);
-
 }
 
 #else
@@ -221,7 +262,7 @@ main (int argc, char **argv)
 	options.dump_results = 0;
 	gen = &generator_sci0;
 
-	while ((c = getopt(argc, argv, "dhvg:H:o:")) > -1) {
+	while ((c = getopt(argc, argv, "dhvg:H:o:I:D:")) > -1) {
 
 		switch (c) {
 
@@ -269,6 +310,16 @@ main (int argc, char **argv)
 			options.heap_filename = optarg;
 			break;
 
+		case 'I':
+			include_paths = realloc(include_paths, sizeof(char *) * (nr_include_paths + 1));
+			include_paths[nr_include_paths++] = optarg;
+			break;
+
+		case 'D':
+			defines = realloc(defines, sizeof(char *) * (nr_defines + 1));
+			defines[nr_defines++] = optarg;
+			break;
+
 		default:
 			fprintf(stderr, "Unrecognized option '%c': Internal error!\n", c);
 			exit(1);
@@ -297,6 +348,10 @@ main (int argc, char **argv)
 	if (yyin != stdin)
 		fclose(yyin);
 	free(file_name);
+	if (include_paths)
+		free(include_paths);
+	if (defines)
+		free(defines);
 	yylex_destroy();
 
 	return 0;
