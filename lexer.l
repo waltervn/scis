@@ -44,6 +44,8 @@ handle_line_directive(const char *s)
 
 %}
 
+%option noyywrap
+
 DIGIT [0-9]
 HEXDIGIT [0-9ABCDEFabcdef]
 PRENUMTOKEN ({DIGIT}+)|(${HEXDIGIT}+)|(0[xX]{HEXDIGIT}+)
@@ -184,7 +186,6 @@ STRING "\"".*[^\\]"\""
 
 <<EOF>> {
 	gen->end_file();
-	yy_delete_buffer( YY_CURRENT_BUFFER );
 	yyterminate();
 }
 
@@ -192,9 +193,3 @@ STRING "\"".*[^\\]"\""
 . report_error(0, "Syntax error: Unexpected character '%c'\n", yytext[0]);
 
 %%
-
-int
-yywrap()
-{
-        return 1; /* no further input */
-}

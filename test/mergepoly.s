@@ -142,7 +142,7 @@ NumberStart:
 			pushi 2
 			lsp 1
 			lsp 2
-			callk $62 4		; StrAt
+			callk k_StrAt 4
 			bnt &NumberStart_NotFound
 			push1
 			push
@@ -170,7 +170,7 @@ NumberEnd:
 			pushi 2
 			lsp 1
 			lsp 2
-			callk $62 4		; StrAt
+			callk k_StrAt 4
 			push1
 			push
 			call &IsNumberChar 2

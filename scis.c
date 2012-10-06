@@ -23,13 +23,18 @@
 #include <stdarg.h>
 #include "scis.h"
 #include "resource.h"
+#include "lexer.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-extern int yylex();
-extern FILE *yyin;
+#ifdef HAVE_LIBMCPP
+	#include <mcpp_lib.h>
+#elif defined(EXTCPP) && defined(HAVE_FORK) && defined(HAVE_PIPE) \
+      && defined(HAVE_DUP2) && defined(HAVE__EXIT)
+	#define EXEC_CPP
+#endif
 
 extern generator_t generator_sci0;
 extern generator_t generator_sci11;
@@ -37,11 +42,6 @@ extern generator_t generator_sci11;
 static int errors = 0;
 static int filedes[2];
 generator_t *gen = NULL;
-
-#if defined(EXTCPP) && defined(HAVE_FORK) && defined(HAVE_PIPE) \
-    && defined(HAVE_DUP2) && defined(HAVE__EXIT)
-	#define EXEC_CPP
-#endif
 
 void
 print_disclaimer()
@@ -128,31 +128,83 @@ set_filename(const char *f)
 	strcpy(file_name, f);
 }
 
-#ifdef EXEC_CPP
+#ifdef HAVE_LIBMCPP
+
 void
-exec_cpp()
+setup_cpp()
 {
-	char **cpp_args = NULL;
-	char *arg;
-	int i = 0;
-	char *cppcmd = malloc(strlen(EXTCPP) + 1);
-	strcpy(cppcmd, EXTCPP);
-
-	for (arg = strtok(cppcmd, " "); arg; arg = strtok(NULL, " ")) {
-		cpp_args = realloc(cpp_args, sizeof(char *) * (i + 3));
-		cpp_args[i++] = arg;
-	}
-	cpp_args[i++] = file_name;
-	cpp_args[i] = NULL;
-
-	close(filedes[0]);
-	dup2(filedes[1], STDOUT_FILENO);
-	close(filedes[1]);
-
-	execvp(cpp_args[0], cpp_args);
-	perror(cpp_args[0]);
-	_exit(1);
+	char *buf;
+	char *cpp_args[] = { "mcpp", file_name };
+	mcpp_use_mem_buffers(1);
+	mcpp_lib_main(2, cpp_args);
+	buf = mcpp_get_mem_buffer(ERR);
+	if (buf)
+		fprintf(stderr, "%s", buf);
+	buf = mcpp_get_mem_buffer(OUT);
+	yy_scan_string(buf);
 }
+
+#elif defined(EXEC_CPP)
+
+void
+setup_cpp()
+{
+	pid_t pid;
+	pipe(filedes);
+
+	pid = fork();
+
+	if (pid < 0) {
+		fprintf(stderr, "Failed to fork()\n");
+		exit(1);
+	}
+
+	if (!pid) {
+		/* Child */
+		char **cpp_args = NULL;
+		char *arg;
+		int i = 0;
+		char *cppcmd = malloc(strlen(EXTCPP) + 1);
+		strcpy(cppcmd, EXTCPP);
+	
+		for (arg = strtok(cppcmd, " "); arg; arg = strtok(NULL, " ")) {
+			cpp_args = realloc(cpp_args, sizeof(char *) * (i + 3));
+			cpp_args[i++] = arg;
+		}
+		cpp_args[i++] = file_name;
+		cpp_args[i] = NULL;
+	
+		close(filedes[0]);
+		dup2(filedes[1], STDOUT_FILENO);
+		close(filedes[1]);
+	
+		execvp(cpp_args[0], cpp_args);
+		perror(cpp_args[0]);
+		_exit(1);
+	}
+
+	/* Parent */
+	close(filedes[1]);
+	dup2(filedes[0], STDIN_FILENO);
+	close(filedes[0]);
+
+}
+
+#else
+
+void
+setup_cpp()
+{
+	if (strcmp(file_name, "-")) {
+		/* not stdin */
+		yyin = fopen(file_name, "r");
+		if (!yyin) {
+			perror(file_name);
+			exit(1);
+		}
+	}
+}
+
 #endif
 
 int
@@ -238,44 +290,14 @@ main (int argc, char **argv)
 		exit(1);
 	}
 
-#ifdef EXEC_CPP
-	{
-		pid_t pid;
-		pipe(filedes);
-
-		pid = fork();
-
-		if (pid < 0) {
-			fprintf(stderr, "Failed to fork()\n");
-			exit(1);
-		}
-
-		if (!pid) {
-			/* Child */
-			exec_cpp();
-		}
-
-		/* Parent */
-		close(filedes[1]);
-		dup2(filedes[0], STDIN_FILENO);
-		close(filedes[0]);
-	}
-#else
-	if (strcmp(file_name, "-")) {
-		/* not stdin */
-		yyin = fopen(file_name, "r");
-		if (!yyin) {
-			perror(file_name);
-			exit(1);
-		}
-	}
-#endif
-
+	setup_cpp();
 	gen->init(&options);
 	yylex();
 	gen->deinit();
-	fclose(yyin);
+	if (yyin != stdin)
+		fclose(yyin);
 	free(file_name);
+	yylex_destroy();
 
 	return 0;
 }
