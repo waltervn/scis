@@ -32,7 +32,7 @@
 #ifdef HAVE_LIBMCPP
 	#include <mcpp_lib.h>
 #elif defined(RTCPP) && defined(HAVE_FORK) && defined(HAVE_PIPE) \
-      && defined(HAVE_DUP2) && defined(HAVE__EXIT)
+      && defined(HAVE_DUP2) && defined(HAVE__EXIT) && defined(HAVE_WAIT)
 	#define EXEC_CPP
 #endif
 
@@ -182,28 +182,35 @@ free_exec_args(char **args)
 
 #ifdef HAVE_LIBMCPP
 
-void
-setup_cpp()
+int
+run_cpp()
 {
 	char *buf;
 	int size;
+	int status;
 	char **args = build_exec_args("mcpp -I-", &size);
 	mcpp_use_mem_buffers(1);
-	mcpp_lib_main(size, args);
+	status = mcpp_lib_main(size, args);
 	buf = mcpp_get_mem_buffer(ERR);
 	if (buf)
 		fprintf(stderr, "%s", buf);
 	buf = mcpp_get_mem_buffer(OUT);
 	free_exec_args(args);
 	yy_scan_string(buf);
+	if (status) {
+		fprintf(stderr, "Error(s) reported by preprocessor, aborting\n");
+		return 1;
+	}
+	return 0;
 }
 
 #elif defined(EXEC_CPP)
 
-void
-setup_cpp()
+int
+run_cpp()
 {
 	pid_t pid;
+	int stat_loc;
 	pipe(filedes);
 
 	pid = fork();
@@ -229,21 +236,28 @@ setup_cpp()
 	close(filedes[1]);
 	dup2(filedes[0], STDIN_FILENO);
 	close(filedes[0]);
+	wait(&stat_loc);
+	if (!WIFEXITED(stat_loc) || WEXITSTATUS(stat_loc)) {
+		fprintf(stderr, "Error(s) reported by preprocessor, aborting\n");
+		return 1;
+	}
+	return 0;
 }
 
 #else
 
-void
-setup_cpp()
+int
+run_cpp()
 {
 	if (strcmp(file_name, "-")) {
 		/* not stdin */
 		yyin = fopen(file_name, "r");
 		if (!yyin) {
 			perror(file_name);
-			exit(1);
+			return 1;
 		}
 	}
+	return 0;
 }
 
 #endif
@@ -341,10 +355,12 @@ main (int argc, char **argv)
 		exit(1);
 	}
 
-	setup_cpp();
-	gen->init(&options);
-	yylex();
-	gen->deinit();
+	if (!run_cpp()) {
+		gen->init(&options);
+		yylex();
+		gen->deinit();
+	}
+
 	if (yyin != stdin)
 		fclose(yyin);
 	free(file_name);

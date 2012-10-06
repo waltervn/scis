@@ -12,7 +12,7 @@ if test "x$LEX" != xflex; then
 	AC_SUBST([LEXLIB], [''])
 fi
 
-AC_CHECK_FUNCS([fork pipe dup2 _exit])
+AC_CHECK_FUNCS([fork pipe dup2 _exit wait])
 
 AC_ARG_ENABLE([run-time-cpp], [AC_HELP_STRING([--disable-run-time-cpp], [don't pipe input files through C preprocessor])])
 AS_IF([test "x$enable_run_time_cpp" != xno], [
