@@ -1,4 +1,5 @@
 #include "symbols.h"
+#include "subfuncs.h"
 
 .exports
 			&Game_obj
@@ -26,7 +27,7 @@
 .dict
 Game_methDict:
 			1				; Number of functions
-			$27				; play()
+			s_play
 			&Game_play
 
 .code
@@ -34,19 +35,19 @@ OpenFiles:
 ; Deletes and reopens output file and opens input file
 ; No arguments
 			pushi 2
-			pushi 4			; Unlink
+			pushi f_FileIO_Unlink
 			lofss &Outfile
 			callk k_FileIO 4
 
 			pushi 3
-			push0			; Open
+			pushi f_FileIO_Open
 			lofss &Outfile
 			push0
 			callk k_FileIO 6
 			sal 0
 
 			pushi 3
-			push0			; Open
+			pushi f_FileIO_Open
 			lofss &Infile
 			push1
 			callk k_FileIO 6
@@ -57,12 +58,12 @@ CloseFiles:
 ; Closes input and output files
 ; No arguments
 			push2
-			push1			; Close
+			pushi f_FileIO_Close
 			lsl 0
 			callk k_FileIO 4
 
 			pushi 2
-			push1			; Close
+			pushi f_FileIO_Close
 			lsl 1
 			callk k_FileIO 4
 			ret
@@ -100,7 +101,7 @@ WriteString:
 			callk k_Format 2
 
 			pushi 3
-			pushi 6			; WriteString
+			pushi f_FileIO_WriteString
 			lsl 0
 			lsl 2
 			callk k_FileIO 6
@@ -320,7 +321,7 @@ FindColor:
 ; 2:		g
 ; 3:		b
 			push1
-			pushi 5
+			pushi f_Palette_FindColor
 			&rest 1
 			callk k_Palette 2
 			ret
@@ -336,7 +337,7 @@ DrawLine:
 ; 6:		priority (optional)
 ; 7:		control (optional)
 			pushi 6
-			pushi 4
+			pushi f_Graph_DrawLine
 			lsp 2
 			lsp 1
 			lsp 4
@@ -443,7 +444,7 @@ ReadPolygon:
 							; Temp 2: Points array
 							; Temp 3: Current size of points array in bytes
 			pushi 4
-			pushi 5			; ReadString
+			pushi f_FileIO_ReadString
 			lsl 2
 			pushi 1024
 			lsl 1
@@ -713,7 +714,7 @@ FreePolygons_Node:
 
 Redraw:
 			pushi 5
-			pushi 13		; RedrawBox
+			pushi f_Graph_RedrawBox
 			push0
 			push0
 			pushi 190
@@ -723,7 +724,7 @@ Redraw:
 
 ClearScreen:
 			pushi 5
-			pushi  10		; FillBoxBackground
+			pushi f_Graph_FillBoxForeground
 			push0
 			push0
 			pushi 190
@@ -808,7 +809,7 @@ Game_play:
 
 Loop:
 			pushi 4
-			pushi 5			; ReadString
+			pushi f_FileIO_ReadString
 			lsl 2
 			pushi 1024
 			lsl 1

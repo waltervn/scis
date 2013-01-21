@@ -1,3 +1,17 @@
+/* SCI version */
+#define SCI_VERSION            8
+#define SCI_VERSION_0_EARLY    1
+#define SCI_VERSION_0_LATE     2
+#define SCI_VERSION_01         3
+#define SCI_VERSION_1_EGA_ONLY 4
+#define SCI_VERSION_1_EARLY    5
+#define SCI_VERSION_1_MIDDLE   6
+#define SCI_VERSION_1_LATE     7
+#define SCI_VERSION_1_1        8
+#define SCI_VERSION_2          9
+#define SCI_VERSION_2_1        10
+#define SCI_VERSION_3          11
+
 /* Kernel functions */
 #define k_Load                 0x00
 #define k_UnLoad               0x01
