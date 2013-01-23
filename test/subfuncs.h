@@ -145,3 +145,20 @@
 #define f_List_ListFirstTrue			20
 #define f_List_ListAllTrue				21
 #define f_List_Sort						22
+
+/* DeviceInfo */
+#define f_DeviceInfo_GetDevice			0
+#define f_DeviceInfo_GetCurrentDevice	1
+#define f_DeviceInfo_InfoPathsEqual		2
+#define f_DeviceInfo_InfoIsFloppy		3
+#define f_DeviceInfo_GetConfigPath		5
+#define f_DeviceInfo_GetSaveCatName		7
+#define f_DeviceInfo_GetSaveFileName	8
+
+/* Memory */
+#define f_Memory_AllocateCritical		1
+#define f_Memory_AllocateNonCritical	2
+#define f_Memory_Free					3
+#define f_Memory_MemCpy					4
+#define f_Memory_Peek					5
+#define f_Memory_Poke					6

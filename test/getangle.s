@@ -1,9 +1,9 @@
 #define ORG_X 0
 #define ORG_Y 0
-#define MIN_DEST_X 0xfff6
-#define MAX_DEST_X 10
-#define MIN_DEST_Y 0xfff6
-#define MAX_DEST_Y 10
+#define MIN_DEST_X 0xff9c
+#define MAX_DEST_X 100
+#define MIN_DEST_Y 0xff9c
+#define MAX_DEST_Y 100
 
 #include "symbols.h"
 #include "subfuncs.h"
@@ -61,28 +61,6 @@ Game_obj:
 
 #endif
 
-#if SCI_VERSION >= SCI_VERSION_2
-
-.dict
-Str_methDict:
-			0				; Number of functions
-
-.object
-			$1234
-			12
-			&Str_methDict
-			&Str_methDict
-			0
-			$ffff
-			c_Str
-			0
-			&Str_name
-			0
-			0
-			0
-
-#endif
-
 .code
 Game_play:
 #define HANDLE 0
@@ -98,11 +76,20 @@ Game_play:
 			lea 4 BUF
 			sat STR
 #else
-			link 7
-			push2
-			push0			; New
-			pushi 256		; 256-byte string
-			callk k_String 4
+#define STR_OBJ 7
+			link 8
+			; We use the Str class here, as ScummVM version detection requires the
+			; Str class to be loaded before calling the String kernel functions anyway
+			class c_Str
+			pushi s_new
+			push1
+			pushi 256		; 256-byte string buffer
+			send 6
+			sat STR_OBJ
+
+			pushi s_data
+			push0
+			send 4
 			sat STR
 #endif
 
@@ -152,16 +139,16 @@ loopX:
 			lst ANGLE
 			callk k_Format 14
 #else
-			pushi 8
-			pushi 12		; FormatBuf
-			lst STR
+			lat STR_OBJ
+			pushi s_format
+			pushi 6
 			lofss &Format
 			lst X1
 			lst Y1
 			lst X2
 			lst Y2
 			lst ANGLE
-			callk k_String 16
+			send 16
 #endif
 
 #if SCI_VERSION < SCI_VERSION_01
@@ -204,6 +191,6 @@ loopX:
 
 .strings
 Game_name:	"GetAngleTester"
-Str_name:	"Str"
+Str_name:	"OutputStr"
 Outfile:	"output.txt"
 Format:		"(%d, %d)-(%d, %d): %d\n"
