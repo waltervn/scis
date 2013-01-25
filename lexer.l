@@ -49,10 +49,10 @@ handle_line_directive(const char *s)
 DIGIT [0-9]
 HEXDIGIT [0-9ABCDEFabcdef]
 PRENUMTOKEN ({DIGIT}+)|(${HEXDIGIT}+)|(0[xX]{HEXDIGIT}+)
-NUMTOKEN {PRENUMTOKEN}|{PRENUMTOKEN}[uU]
-IDENTCHARFIRST [[:alpha:]_\-\+\*\?]
+NUMTOKEN [\-\+]?{PRENUMTOKEN}[uU]?
+IDENTCHARFIRST [[:alpha:]_\*\?]
 IDENTCHARNEXT  [[:alnum:]_\-\+\*\?]
-IDENTIFIER {IDENTCHARFIRST}{IDENTCHARNEXT}*
+IDENTIFIER [\-\+]?{IDENTCHARFIRST}{IDENTCHARNEXT}*
 STRING "\"".*[^\\]"\""
 
 %%
@@ -85,23 +85,37 @@ STRING "\"".*[^\\]"\""
 {NUMTOKEN} {
 	int num;
 	int word = 1;
+	int sign = 1;
+	int system = 10;
 	char *cp;
 	int sl = strlen(yytext);
+	char *start = yytext;
 
-	if (toupper(yytext[sl-1]) == 'U') {
+	if (toupper(yytext[sl - 1]) == 'U') {
 		word = 0;
-		yytext[sl-1] = 0; /* Remove */
+		yytext[sl - 1] = 0; /* Remove */
 	}
 
-	if (*yytext == '$')
-		num = strtol(yytext + 1, &cp, 16);
-	else if (yytext[1] == 'x' || yytext[1] == 'X')
-		num = strtol(yytext + 2, &cp, 16);
-	else
-		num = strtol(yytext, &cp, 10);
+	if (*start == '-') {
+		sign = -1;
+		++start;
+	} else if (*start == '+')
+		++start;
+
+	if (*start == '$') {
+		system = 16;
+		++start;
+	} else if (*start == '0' && toupper(start[1]) == 'X') {
+		system = 16;
+		start += 2;
+	}
+
+	num = strtol(start, &cp, system);
 
 	if (*cp)
 		report_error(0, "Invalid numeric '%s'\n", yytext);
+
+	num *= sign;
 
 	gen->handle_numeric(num, word);
 }

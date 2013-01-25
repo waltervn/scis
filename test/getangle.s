@@ -1,8 +1,8 @@
 #define ORG_X 0
 #define ORG_Y 0
-#define MIN_DEST_X 0xff9c
+#define MIN_DEST_X -100
 #define MAX_DEST_X 100
-#define MIN_DEST_Y 0xff9c
+#define MIN_DEST_Y -100
 #define MAX_DEST_Y 100
 
 #include "symbols.h"
