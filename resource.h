@@ -24,7 +24,7 @@ struct res;
 typedef struct res res_t;
 
 res_t *
-res_alloc(int type, int max_size);
+res_alloc(int type, unsigned int max_size, int big_endian);
 
 void
 res_free(res_t *r);

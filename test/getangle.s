@@ -59,6 +59,22 @@ Game_obj:
 			1
 			1
 
+; Add Sound object for ScummVM detection
+.dict
+SoundObj_methDict:
+			0
+
+.object
+			$1234
+			9
+			&SoundObj_methDict
+			&SoundObj_methDict
+			0
+			$ffff
+			c_Sound
+			0
+			&Sound_name
+
 #endif
 
 .code
@@ -192,5 +208,6 @@ loopX:
 .strings
 Game_name:	"GetAngleTester"
 Str_name:	"OutputStr"
+Sound_name:	"SoundObj"
 Outfile:	"output.txt"
 Format:		"(%d, %d)-(%d, %d): %d\n"

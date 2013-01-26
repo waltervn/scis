@@ -88,7 +88,7 @@ init(const options_t *options)
 	symbol_defs = new_symtab(0);
 	symbol_usages = new_symtab(1);
 	symbol_relocation = new_symtab(1);
-	script = res_alloc(0x82, MAX_SCRIPT_SIZE);
+	script = res_alloc(0x82, MAX_SCRIPT_SIZE, 0);
 	if (!script)
 		report_error(1, "Failed to allocate script\n");
 	return 1;

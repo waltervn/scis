@@ -27,12 +27,13 @@
 struct res {
 	unsigned int pos;
 	unsigned int max_size;
-	unsigned char type;
+	int type;
 	unsigned char *data;
+	int big_endian;
 };
 
 res_t *
-res_alloc(int type, int max_size)
+res_alloc(int type, unsigned int max_size, int big_endian)
 {
 	res_t *res = malloc(sizeof(res_t));
 
@@ -48,6 +49,7 @@ res_alloc(int type, int max_size)
 	res->max_size = max_size;
 	res->pos = 0;
 	res->type = type;
+	res->big_endian = big_endian;
 
 	return res;
 }
@@ -93,8 +95,13 @@ void
 res_write_word(res_t *r, int b)
 {
 	unsigned char v[2];
-	v[0] = b & 0xff;
-	v[1] = (b >> 8) & 0xff;
+	if (r->big_endian) {
+		v[0] = (b >> 8) & 0xff;
+		v[1] = b & 0xff;
+	} else {
+		v[0] = b & 0xff;
+		v[1] = (b >> 8) & 0xff;
+	}
 	res_write_bulk(r, v, 2);
 }
 
@@ -104,7 +111,10 @@ res_read_word(const res_t *r, unsigned int pos)
 	if (pos + 2 > r->pos)
 		report_error(1, "Reading beyond current resource size %d!\n", r->pos);
 
-	return (r->data[pos] | (r->data[pos + 1] << 8));
+	if (r->big_endian)
+		return ((r->data[pos] << 8) | r->data[pos + 1]);
+	else
+		return (r->data[pos] | (r->data[pos + 1] << 8));
 }
 
 void
@@ -115,8 +125,14 @@ res_modify_word(res_t *r, int b, unsigned int pos)
 	if (pos + 2 > r->pos)
 		report_error(1, "Modifying word beyond current resource size %d!\n", r->pos);
 
-	v[0] = b & 0xff;
-	v[1] = (b >> 8) & 0xff;
+	if (r->big_endian) {
+		v[0] = (b >> 8) & 0xff;
+		v[1] = b & 0xff;
+	} else {
+		v[0] = b & 0xff;
+		v[1] = (b >> 8) & 0xff;
+	}
+
 	memcpy(r->data + pos, v, 2);
 #ifdef DEBUG_OUTPUT
 	fprintf(stderr, "[DBG-OUT] %04x: Modifying to %04x\n", pos, b);

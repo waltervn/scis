@@ -51,7 +51,7 @@ void
 print_disclaimer()
 {
 	printf("scis - SCI assembler, version " VERSION "\n"
-	       "\nCopyright (C) 2002-2012 by the authors listed in the AUTHORS file\n"
+	       "\nCopyright (C) 2002-2013 by the authors listed in the AUTHORS file\n"
 	       "This program is Free Software, licensed under the terms of the GNU\n"
 	       "General Public License (GPL) v3 or any later version (at your choice).\n"
 	       "It is provided WITHOUT WARRANTY of any kind, either expressed or\n"
@@ -274,9 +274,10 @@ main (int argc, char **argv)
 	options.wide_calls = 0;
 	options.absolute_lofs = 0;
 	options.dump_results = 0;
+	options.big_endian = 0;
 	gen = &generator_sci0;
 
-	while ((c = getopt(argc, argv, "dhvg:H:o:I:D:")) > -1) {
+	while ((c = getopt(argc, argv, "dhvg:bH:o:I:D:")) > -1) {
 
 		switch (c) {
 
@@ -314,6 +315,10 @@ main (int argc, char **argv)
 				fprintf(stderr, "Invalid SCI generation target specified\n");
 				exit(1);
 			}
+			break;
+
+		case 'b':
+			options.big_endian = 1;
 			break;
 
 		case 'o':

@@ -44,6 +44,7 @@ typedef struct {
 	int wide_calls;
 	int absolute_lofs;
 	int dump_results;
+	int big_endian;
 } options_t;
 
 /* Generator */

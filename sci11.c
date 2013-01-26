@@ -87,7 +87,7 @@ init(const options_t *options)
 	if (options->wide_calls)
 		use_wide_calls();
 
-	script = res_alloc(0x82, MAX_SCRIPT_SIZE);
+	script = res_alloc(0x82, MAX_SCRIPT_SIZE, options->big_endian);
 	if (!script)
 		report_error(1, "Failed to allocate script\n");
 
@@ -96,7 +96,7 @@ init(const options_t *options)
 	res_write_word(script, 0); /* Unknown */
 	res_write_word(script, 0); /* Number of exports */
 
-	heap = res_alloc(0x91, MAX_HEAP_SIZE);
+	heap = res_alloc(0x91, MAX_HEAP_SIZE, options->big_endian);
 	if (!heap)
 		report_error(1, "Failed to allocate heap\n");
 
