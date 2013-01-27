@@ -57,6 +57,7 @@ static int arg_sizes[5];
 static int args_count;
 static int args_pos;
 static int op_begin, op_size;
+static int resource_fork;
 
 static struct {
 	char *name;
@@ -78,6 +79,7 @@ init(const options_t *options)
 	script_file = options->script_filename;
 	heap_file = options->heap_filename;
 	dump_results = options->dump_results;
+	resource_fork = options->resource_fork;
 	symbol_defs = new_symtab(0);
 	symbol_usages = new_symtab(1);
 	symbol_reloc_script = new_symtab(1);
@@ -162,18 +164,27 @@ deinit()
 	free_symtab(symbol_reloc_script);
 	free_symtab(symbol_reloc_heap);
 	int errors = errors_found();
-	if (errors)
-		fprintf(stderr, "Encountered %d errors: No output was written.\n", errors);
-	else {
-		res_save(script, script_file);
-		res_save(heap, heap_file);
-	}
 
 	if (dump_results) {
 		printf("%s:\n", script_file);
 		res_dump(script);
 		printf("\n%s:\n", heap_file);
 		res_dump(heap);
+	}
+
+	if (errors)
+		fprintf(stderr, "Encountered %d errors: No output was written.\n", errors);
+	else if (resource_fork) {
+		/* Append four zero bytes to indicate uncompressed resource */
+		res_write_word(script, 0);
+		res_write_word(script, 0);
+		res_write_word(heap, 0);
+		res_write_word(heap, 0);
+		res_save_resource_fork(script, script_file);
+		res_save_resource_fork(heap, heap_file);
+	} else {
+		res_save(script, script_file);
+		res_save(heap, heap_file);
 	}
 
 	res_free(script);

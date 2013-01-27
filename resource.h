@@ -51,6 +51,9 @@ void
 res_save(const res_t *r, const char *filename);
 
 void
+res_save_resource_fork(const res_t *r, const char *filename);
+
+void
 res_dump(const res_t *r);
 
 #endif

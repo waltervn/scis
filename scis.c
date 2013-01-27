@@ -77,6 +77,8 @@ print_usage()
 	       "\t\t2: late SCI1\n"
 	       "\t\t3: SCI1.1\n"
 	       "\t\t4: SCI2\n"
+	       "\tb:\tBig-Endian mode\n"
+	       "\tr:\tOutput textual Mac resource fork data\n"
 	       "\t-o <f>:\tWrite script to <f> (defaults to 'sci.scr')\n"
 	       "\t-H <f>:\tWrite heap to <f> (defaults to 'sci.hep')\n"
 	       );
@@ -275,9 +277,10 @@ main (int argc, char **argv)
 	options.absolute_lofs = 0;
 	options.dump_results = 0;
 	options.big_endian = 0;
+	options.resource_fork = 0;
 	gen = &generator_sci0;
 
-	while ((c = getopt(argc, argv, "dhvg:bH:o:I:D:")) > -1) {
+	while ((c = getopt(argc, argv, "dhvg:brH:o:I:D:")) > -1) {
 
 		switch (c) {
 
@@ -319,6 +322,10 @@ main (int argc, char **argv)
 
 		case 'b':
 			options.big_endian = 1;
+			break;
+
+		case 'r':
+			options.resource_fork = 1;
 			break;
 
 		case 'o':

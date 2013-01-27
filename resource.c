@@ -160,11 +160,50 @@ res_save(const res_t *r, const char *filename)
 		if (written >= 2)
 			written = write(fd, r->data, r->pos);
 		if (written < r->pos) {
-			perror ("While writing to output file");
+			perror("While writing to output file");
 			fprintf(stderr, "File was: '%s'\n", filename);
 		}
+		close(fd);
 	}
-	close(fd);
+}
+
+void
+res_save_resource_fork(const res_t *r, const char *filename)
+{
+	FILE *f = fopen(filename, "w");
+	if (!f) {
+		perror("While creating output file");
+		fprintf(stderr, "File was: '%s'\n", filename);
+	} else {
+		int i;
+		const char *type_str;
+
+		switch(r->type & 0x7f) {
+		case 0x02:
+			type_str = "SCR";
+			break;
+		case 0x11:
+			type_str = "HEP";
+			break;
+		default:
+			fprintf(stderr, "Unknown resource type %d encountered\n", r->type);
+			fclose(f);
+			return;			
+		}
+		fprintf(f, "data '%s ' (0, \"0.%s\") {\n", type_str, type_str);
+		for (i = 0; i < r->pos; i++) {
+			if (!(i & 0xf))
+				fprintf(f, "        $\"%02x", r->data[i]);
+			else
+				fprintf(f, " %02x", r->data[i]);
+
+			if ((i & 0xf) == 0xf && i != r->pos - 1)
+				fprintf(f, "\"\n");
+		}
+
+		fprintf(f, "\"\n};\n");
+		fclose(f);
+	}
 }
 
 void

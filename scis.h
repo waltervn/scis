@@ -45,6 +45,7 @@ typedef struct {
 	int absolute_lofs;
 	int dump_results;
 	int big_endian;
+	int resource_fork;
 } options_t;
 
 /* Generator */
