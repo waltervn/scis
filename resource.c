@@ -24,6 +24,10 @@
 #include "resource.h"
 #include "scis.h"
 
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 struct res {
 	unsigned int pos;
 	unsigned int max_size;
@@ -148,7 +152,7 @@ res_get_pos(const res_t *r)
 void
 res_save(const res_t *r, const char *filename)
 {
-	int fd = creat(filename, 0644);
+	int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0644);
 	if (!fd) {
 		perror ("While creating output file");
 		fprintf(stderr, "File was: '%s'\n", filename);
